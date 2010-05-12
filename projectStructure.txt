@@ -1,0 +1,13 @@
+rSeqPipeline.git
+|
+|- rSeq
+	|- scripts
+	|
+	|- utils
+		|
+		|- align
+		|- expression
+		|- genOnt
+		|- motifDisc
+		|- snp
+		|- file_io
