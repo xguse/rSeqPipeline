@@ -1,13 +1,13 @@
-rSeqPipeline.git
+rSeqPipeline.git/
 |
-|- rSeq
-	|- scripts
+|- rSeq/
+	|- scripts/
 	|
-	|- utils
+	|- utils/
 		|
-		|- align
-		|- expression
-		|- genOnt
-		|- motifDisc
-		|- snp
-		|- file_io
+		|- align.py
+		|- expression.py
+		|- genOnt.py
+		|- motifDisc.py
+		|- snp.py
+		|- file_io.py
