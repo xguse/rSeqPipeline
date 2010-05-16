@@ -1,6 +1,9 @@
-class Error(Exception):
-    """Base class for exceptions in rSeq."""
-    
+
+class InvalidFileFormatError(Exception):
+    pass
+
+class InvalidOptionError(Exception):
+    pass
 
 class ExternalError(EnvironmentError):
     """Exception raised when a problem occurs while attempting to run an external system call."""
