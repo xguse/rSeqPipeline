@@ -2,12 +2,20 @@ import subprocess
 import os
 from rSeq.utils.errors import *
 
+# ++++++++ Verifiying/preparing external environment ++++++++
 def whereis(program):
     for path in os.environ.get('PATH', '').split(':'):
         if os.path.exists(os.path.join(path, program)) and not os.path.isdir(os.path.join(path, program)):
             return os.path.join(path, program)
     return None
 
+def mkdirp(path):
+    """Create new dir while creating any parent dirs in the path as needed.
+    """
+
+    if not os.path.isdir(path):
+        os.makedirs(path)
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 def runExternalApp(progName,argStr):
     """Convenience func to handle calling and monitoring output of external programs."""
