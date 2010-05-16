@@ -1,8 +1,8 @@
 from rSeq.utils.bed import divByWindow
 
 
-bedA = '/Users/biggus/sandbox/testBEDtools/D.bed'
-bedB = '/Users/biggus/sandbox/testBEDtools/C.bed'
-outDir = '/Users/biggus/sandbox/testBEDtools/this/that'
+bedA = '/home/dunnw/data/genomes/aaegypti.SUPERCONTIGS-Liverpool.AaegL1/aaegypti.GENES-AaegL1.2.bed'
+bedB = '/home/dunnw/data/solexa/bowtie_out/LSxLBx_bowtie.bed'
+outDir = '/home/dunnw/data/solexa/bowtie_out/LSxLBx_bowtie_results'
 
-result = divByWindow(bedA,bedB,win=[50,51],cols=[6,4],side='right',outDir=outDir)
+print divByWindow(bedA,bedB,win=[2000,500],cols=[6,6],side='right',outDir=outDir)
