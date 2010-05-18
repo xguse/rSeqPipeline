@@ -27,7 +27,7 @@ def isStranded(line):
     else:
         return True
 
-def extractFromDoubleSidedBedtoolOut(filePath,cols,side='right',outDir='.'):
+def extractFromDoubleSidedBedtoolOut(filePath,cols,side='right',outDir=''):
     """Creates new file from filePath using only the bedInfo from the
     left/right (based on 'side') side of a BEDtools outFile with double-
     sided output (side=[3,6]). 'cols' must be a list with length of columns
@@ -55,7 +55,7 @@ def extractFromDoubleSidedBedtoolOut(filePath,cols,side='right',outDir='.'):
         
         # Ensure the length of each new line is what we expect, then write out cleaned line
         if not ((len(divLine[0])==cols[0]) and (len(divLine[1])==cols[1])):
-            raise InvalidFileFormatError('ERROR: line %s in file %s has unexpected number of columns or the values in "cols" is incorrect.' % \
+            raise InvalidFileFormatError('line %s in file %s has unexpected number of columns or the values in "cols" is incorrect.' % \
                                          (lineNum,filePath))
         else:
             if side == 'right':
@@ -63,7 +63,7 @@ def extractFromDoubleSidedBedtoolOut(filePath,cols,side='right',outDir='.'):
             elif side == 'left':
                 outFile.write('%s\n' % ('\t'.join(divLine[0])))
             else:
-                raise InvalidOptionError('ERROR: option "side" must be one of %s. Was: %s.' % \
+                raise InvalidOptionError('option "side" must be one of %s. Was: %s.' % \
                                          (['right','left'], side))
     
     outFile.close()
@@ -73,7 +73,7 @@ def extractFromDoubleSidedBedtoolOut(filePath,cols,side='right',outDir='.'):
     return outFilePath
     
     
-def divByWindow(bedA_Path,bedB_Path,win=[500,500],cols=[6,6],side='right',outDir='.'):
+def divByWindow(bedA_Path,bedB_Path,win=[500,500],cols=[6,6],side='right',outDir=''):
     """Create files separating features in bedB by those alling within the area defined
     by <win> and those outside this area in bedA.  If A.bed is stranded, the area is defined
     by win[0] upstrm and win[1] dwnstrm on the FEATURE's strand.  Otherwise its 
@@ -107,9 +107,9 @@ def divByWindow(bedA_Path,bedB_Path,win=[500,500],cols=[6,6],side='right',outDir
     testB.close()
     
     if not isBEDline(linesA[1]):
-        raise InvalidFileFormatError('ERROR: %s does not seem to be in BED format.' % (bedA_Path))
+        raise InvalidFileFormatError('%s does not seem to be in BED format.' % (bedA_Path))
     if not isBEDline(linesB[1]):
-        raise InvalidFileFormatError('ERROR: %s does not seem to be in BED format.' % (bedB_Path))
+        raise InvalidFileFormatError('%s does not seem to be in BED format.' % (bedB_Path))
     
     # If bedA is stranded: use windowBed with -sw option, otherwise with only -l,-r options
     # to create file from bedB features INSIDE window around features in bedA.

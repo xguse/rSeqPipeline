@@ -1,3 +1,4 @@
+from rSeq.utils.errors import *
 from rSeq.utils.externals import runExternalApp
 
 
@@ -23,11 +24,11 @@ def exonerateCigar2BEDline(cigarLine,rgb="0,0,0"):
     # Format cigar info for easy use:
     cigar = []
     if not len(cigInfo)%2==0:
-        raise UnexpectedValueError('ERROR: cigInfo var is not a list with an even number of indexes.')
+        raise UnexpectedValueError('cigInfo var is not a list with an even number of indexes.')
     while cigInfo:
         cigar.append((cigInfo.pop(0),cigInfo.pop(0)))
     if "I" in [x[0] for x in cigar]:
-        raise UnexpectedValueError('ERROR: cigar info includeds "I" and I have not been taught how to deal with this!')
+        raise UnexpectedValueError('cigar info includeds "I" and I have not been taught how to deal with this!')
     
     # If match is to '-' strand of target, reverse the cigar info
     if tStrand == '-':

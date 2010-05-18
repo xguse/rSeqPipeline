@@ -39,7 +39,7 @@ def onlyInA(fileA,fileB,outFile):
                 rLines += 1
                 outFile.write('%s\n' % (line))
             elif counts[0] == 0:
-                raise UnexpectedValueError('ERROR: it looks like line "%s" does not occur in either file!!\n"lineDict" may have been corrupted.' % \
+                raise UnexpectedValueError('it looks like line "%s" does not occur in either file!!\n"lineDict" may have been corrupted.' % \
                                            (line))
         else:
             continue    
