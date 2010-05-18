@@ -146,7 +146,7 @@ def divByWindow(bedA_Path,bedB_Path,win=[500,500],cols=[6,6],side='right',outDir
     
     # Create file with bedB feats OUTSIDE of window of features in bedA.
     cleanedBsNotInWinPath = cleanedBsInWinNewPath.replace('_featsIn_','_featsNotIn_')
-    onlyInA(bedB_Path,cleanedBsInWinNewPath,'%s/%s' % (outDir,cleanedBsNotInWinPath))
+    onlyInA(bedB_Path,cleanedBsInWinNewPath,cleanedBsNotInWinPath)
     #resultIsectBed = runExternalApp('intersectBed','-a %s -b %s -v > %s' % \
                                     #(bedB_Path,
                                      #cleanedBsInWinNewPath,
