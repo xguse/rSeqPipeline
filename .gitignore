@@ -1,0 +1,6 @@
+rSeq/__init__.pyc
+rSeq/utils/__init__.pyc
+rSeq/utils/errors.pyc
+rSeq/utils/externals.pyc
+.gitignore
+rSeq/utils/bed.pyc
