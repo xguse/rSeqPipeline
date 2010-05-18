@@ -1,4 +1,7 @@
 
+class UnexpectedValueError(Exception):
+    pass
+
 class InvalidFileFormatError(Exception):
     pass
 
