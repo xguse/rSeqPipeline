@@ -4,3 +4,4 @@ rSeq/utils/errors.pyc
 rSeq/utils/externals.pyc
 .gitignore
 rSeq/utils/bed.pyc
+rSeq/utils/files.pyc
