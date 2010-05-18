@@ -1,6 +1,6 @@
 from rSeq.utils.errors import *
 from rSeq.utils.externals import runExternalApp,mkdirp
-
+from rSeq.utils.files import onlyInA
 def isBEDline(line):
     """Returns TRUE if line 'looks' like a MINIMAL BED formated line."""
     line = line.strip('\n').split('\t')
@@ -146,10 +146,11 @@ def divByWindow(bedA_Path,bedB_Path,win=[500,500],cols=[6,6],side='right',outDir
     
     # Create file with bedB feats OUTSIDE of window of features in bedA.
     cleanedBsNotInWinPath = cleanedBsInWinNewPath.replace('_featsIn_','_featsNotIn_')
-    resultIsectBed = runExternalApp('intersectBed','-a %s -b %s -v > %s' % \
-                                    (bedB_Path,
-                                     cleanedBsInWinNewPath,
-                                     cleanedBsNotInWinPath))
+    onlyInA(bedB_Path,cleanedBsInWinNewPath,'%s/%s' % (outDir,cleanedBsNotInWinPath))
+    #resultIsectBed = runExternalApp('intersectBed','-a %s -b %s -v > %s' % \
+                                    #(bedB_Path,
+                                     #cleanedBsInWinNewPath,
+                                     #cleanedBsNotInWinPath))
     
     # Return Filenames of divided bed files
     return (cleanedBsInWinNewPath,cleanedBsNotInWinPath)
