@@ -42,7 +42,7 @@ as aligned to the target. """
     
     # Prepare outdir 
     mkdirp(opts.out)
-    outFile = open('%s/%s' % (opts.out,args[0].split('/')[-1].replace('.txt', '.bed')))
+    outFile = open('%s/%s' % (opts.out,args[0].split('/')[-1].replace('.txt', '.bed')), 'w')
     outFile.write('track name=%s description="%s" useScore=0\n' % (opts.track,opts.description))
     
     # For every line starting "cigar:" convert to bed and write out
