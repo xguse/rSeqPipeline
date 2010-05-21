@@ -1,4 +1,5 @@
 from rSeq.utils.align import exonerateCigar2BEDline
+from rSeq.utils.externals import mkdirp
 from rSeq.utils.errors import *
 import optparse
 import sys
@@ -19,7 +20,7 @@ as aligned to the target. """
     usage = """python %prog [options]  exonerateOut"""
     parser = optparse.OptionParser(usage=usage, epilog=epilog)
     
-    parser.add_option('--out', dest="out", type='string',default='',
+    parser.add_option('--out', dest="out", type='string',default='.',
                       help="""Directory path for output (default=%default).""")
     parser.add_option('--track', dest="track", type='string',default='untitled',
                       help="""Unbroken string to use for track name (default=%default).""")
@@ -38,7 +39,9 @@ as aligned to the target. """
         opts.out = opts.out[:-1]
     if not len(opts.rgb.split(',')):
         raise InvalidOptionError('Malformed --rgb option: %s.' % (opts.rgb))
-
+    
+    # Prepare outdir 
+    mkdirp(opts.out)
     outFile = open('%s/%s' % (opts.out,args[0].split('/')[-1].replace('.txt', '.bed')))
     outFile.write('track name=%s description="%s" useScore=0\n' % (opts.track,opts.description))
     

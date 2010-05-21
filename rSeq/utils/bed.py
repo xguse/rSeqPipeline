@@ -27,7 +27,7 @@ def isStranded(line):
     else:
         return True
 
-def extractFromDoubleSidedBedtoolOut(filePath,cols,side='right',outDir=''):
+def extractFromDoubleSidedBedtoolOut(filePath,cols,side='right',outDir='.'):
     """Creates new file from filePath using only the bedInfo from the
     left/right (based on 'side') side of a BEDtools outFile with double-
     sided output (side=[3,6]). 'cols' must be a list with length of columns
@@ -73,7 +73,7 @@ def extractFromDoubleSidedBedtoolOut(filePath,cols,side='right',outDir=''):
     return outFilePath
     
     
-def divByWindow(bedA_Path,bedB_Path,win=[500,500],cols=[6,6],side='right',outDir=''):
+def divByWindow(bedA_Path,bedB_Path,win=[500,500],cols=[6,6],side='right',outDir='.'):
     """Create files separating features in bedB by those alling within the area defined
     by <win> and those outside this area in bedA.  If A.bed is stranded, the area is defined
     by win[0] upstrm and win[1] dwnstrm on the FEATURE's strand.  Otherwise its 
