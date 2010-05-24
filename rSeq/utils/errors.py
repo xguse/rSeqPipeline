@@ -1,8 +1,10 @@
 
 class UnexpectedValueError(Exception):
+    """When values that "should" not be possible happen; like if a variable was changed unexpectedly."""
     pass
 
 class InvalidFileFormatError(Exception):
+    """When errors occur due to malformed file formats."""
     pass
 
 class InvalidOptionError(Exception):
