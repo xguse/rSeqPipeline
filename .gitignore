@@ -6,3 +6,4 @@ rSeq/utils/externals.pyc
 rSeq/utils/bed.pyc
 rSeq/utils/files.pyc
 rSeq/utils/motifDiscovery.pyc
+rSeq/utils/align.pyc
