@@ -29,7 +29,7 @@ def exonerateCigar2BEDline(cigarLine,rgb="0,0,0"):
     while cigInfo:
         cigar.append((cigInfo.pop(0),cigInfo.pop(0)))
     if "I" in [x[0] for x in cigar]:
-        sys.stderr.write('warn: just encountered a cigar containing "I".  Skipping.')
+        sys.stderr.write('warn: just encountered a cigar containing "I".  Skipping.\n')
         return '' # for now just do nothing
 
         #raise UnexpectedValueError('cigar info includeds "I" and I have not been taught how to deal with this!')
