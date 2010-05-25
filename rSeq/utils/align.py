@@ -1,3 +1,4 @@
+import sys
 from rSeq.utils.errors import *
 from rSeq.utils.externals import runExternalApp
 
@@ -28,7 +29,10 @@ def exonerateCigar2BEDline(cigarLine,rgb="0,0,0"):
     while cigInfo:
         cigar.append((cigInfo.pop(0),cigInfo.pop(0)))
     if "I" in [x[0] for x in cigar]:
-        raise UnexpectedValueError('cigar info includeds "I" and I have not been taught how to deal with this!')
+        sys.stderr('warn: just encountered a cigar containing "I".  Skipping.')
+        return '' # for now just do nothing
+
+        #raise UnexpectedValueError('cigar info includeds "I" and I have not been taught how to deal with this!')
     
     # If match is to '-' strand of target, reverse the cigar info
     if tStrand == '-':
