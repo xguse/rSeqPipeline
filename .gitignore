@@ -7,3 +7,4 @@ rSeq/utils/bed.pyc
 rSeq/utils/files.pyc
 rSeq/utils/motifDiscovery.pyc
 rSeq/utils/align.pyc
+rSeq/scripts/__init__.pyc
