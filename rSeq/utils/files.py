@@ -1,6 +1,14 @@
 import sys
 from rSeq.utils.errors import *
 
+def tableFile2namedTuple(tablePath,sep='\t'):
+    """Returns namedTuple from table file using first row fields as col headers."""
+
+    reader  = csv.reader(open(tablePath), delimiter=sep)
+    headers = reader.next()
+    Table   = collections.namedtuple('Table', ', '.join(headers))
+    data    = map(Table._make, reader)
+    return data
 
 class ParseFastA(object):
     """Returns a record-by-record fastA parser analogous to file.readline()."""
