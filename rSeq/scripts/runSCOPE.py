@@ -9,8 +9,7 @@ if __name__ == "__main__":
 
     
     #+++++++++++ File Parseing Etc +++++++++++
-    desc = """Calls the folowing funcs: 
-    'runSCOPE(pLen,genes,jobName,scopeDir,outDir,paramName,jMem='2000',verbose=False)'"""
+    desc = """Calls the folowing funcs: 'runSCOPE(pLen,genes,jobName,scopeDir,outDir,paramName,jMem='2000',verbose=False)'"""
     
     usage = """python %prog [args]"""
     parser = optparse.OptionParser(usage=usage, description=desc)
