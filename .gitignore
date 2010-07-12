@@ -1,10 +1,1 @@
-rSeq/__init__.pyc
-rSeq/utils/__init__.pyc
-rSeq/utils/errors.pyc
-rSeq/utils/externals.pyc
-.gitignore
-rSeq/utils/bed.pyc
-rSeq/utils/files.pyc
-rSeq/utils/motifDiscovery.pyc
-rSeq/utils/align.pyc
-rSeq/scripts/__init__.pyc
+*.pyc
