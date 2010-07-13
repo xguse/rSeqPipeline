@@ -47,12 +47,13 @@ if __name__ == "__main__":
             raise InvalidOptionError('runSCOPE.py: --list-params requires --scope.')
         listParams(opts.scope)
         exit(0)
+    if opts.genes:
+        opts.genes = opts.genes.replace(',',';')
 
         
         
     # runSCOPE(pLen,genes,jobName,scopeDir,outDir,paramName,jMem='2000',verbose=False) 
     sys.stdout.write("setting up scope run (real data)...")
-    opts.genes = opts.genes.replace(',',';')
     realRes = runSCOPE(opts.len,
                        opts.genes,
                        opts.job,
