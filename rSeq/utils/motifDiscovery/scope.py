@@ -11,7 +11,7 @@ def runSCOPE(pLen,genes,jobName,scopeDir,outDir,paramName,jMem='2000',verbose=Fa
     pLen     = promorter length to use."""
     # Get full path (if not given) for outDir since we will be jumping around in the directory tree
     if not outDir.startswith('/'):
-        outDir = os.getcwd()+outDir
+        outDir = os.getcwd()+'/'+outDir
         outDir = outDir.rstrip('/')
     else:
         outDir = outDir.rstrip('/')
