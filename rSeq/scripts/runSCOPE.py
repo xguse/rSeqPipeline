@@ -53,7 +53,7 @@ if __name__ == "__main__":
         
         
     # runSCOPE(pLen,genes,jobName,scopeDir,outDir,paramName,jMem='2000',verbose=False) 
-    sys.stdout.write("setting up scope run (real data)...")
+    sys.stdout.write("setting up scope run (real data)...\n")
     realRes = runSCOPE(opts.len,
                        opts.genes,
                        opts.job,
