@@ -51,7 +51,7 @@ if __name__ == "__main__":
         
         
     # runSCOPE(pLen,genes,jobName,scopeDir,outDir,paramName,jMem='2000',verbose=False) 
-    print "setting up scope run (real data)..."
+    sys.stdout.write("setting up scope run (real data)...")
     opts.genes = opts.genes.replace(',',';')
     realRes = runSCOPE(opts.len,
                        opts.genes,
@@ -64,7 +64,7 @@ if __name__ == "__main__":
     if opts.random:
         # get correct number of random gene sets and run/save results.
         ctrlResList = []
-        print "setting up scope run (random data)..."
+        sys.stdout.write("setting up scope run (random data)...\n")
         for i in range(int(opts.random)):
             randGenes = getRandomGeneSet(opts.scope,opts.param,len(opts.genes.split(';')))
             randGenes = ';'.join(randGenes)
@@ -77,4 +77,6 @@ if __name__ == "__main__":
                                opts.mem,
                                opts.verb)
             ctrlResList.append(ctrlRes)
+            
+    exit(0)
     
