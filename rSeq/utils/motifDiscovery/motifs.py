@@ -336,7 +336,15 @@ def writeXMSfile(motifList,outPath):
         oFile.write('%s' % (m.toXMSmotif()))
     oFile.write('</motifset>\n')
     oFile.close()
-    
+
+def writePoSSuMfile(motifList,outPath):
+    """Given a list of Motif objs, write out the contents in PoSSuM format."""
+    oFile = open(outPath, 'w')
+    oFile.write('BEGIN GROUP\n')
+    for m in motifList:
+        oFile.write('%s' % (m.toPossumMotif()))
+    oFile.write('END')
+    oFile.close()
 # --- facilitate analyses with motifs ---
 
 def getHitDict(motifList,seqDict,pThresh=0.01,halfAT=0.25,halfGC=0.25):
@@ -409,3 +417,4 @@ def motifHyprGeoEnrichment(motifList,hitDict,foregroundSeqs):
     return tuple(pVals)
     
 
+    
