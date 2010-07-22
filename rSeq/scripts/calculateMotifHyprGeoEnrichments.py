@@ -159,7 +159,7 @@ if __name__ == "__main__":
                       help="""Include if stdOut/stdErr is desired. (default=%default).""")
     parser.add_option('--check-seqs',action='store_true',default=False,
                       help="""Print info about promoter sequences and exit. (default=%default).""")
-    parser.add_option('--expect',default=False,
+    parser.add_option('--expect',action='store_true',default=False,
                       help="""Use median seqLen to set success threshold at greater than the estimated expected number of occurences in each promoter [pValThresh*searchesPerSeq]. (default=%default).""")
     
 
