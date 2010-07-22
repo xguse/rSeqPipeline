@@ -1,26 +1,45 @@
 import sys
+import csv
+import collections
 from rSeq.utils.errors import *
 
-def tableFile2namedTuple(tablePath,sep='\t'):
-    """Returns namedTuple from table file using first row fields as col headers."""
+
+def tableFile2namedTuple(tablePath,sep='\t',headers=None):
+    """Returns namedTuple from table file using first row fields as
+    col headers or a list supplied by user."""
 
     reader  = csv.reader(open(tablePath), delimiter=sep)
-    headers = reader.next()
+    if not headers:
+        headers = reader.next()   
     Table   = collections.namedtuple('Table', ', '.join(headers))
     data    = map(Table._make, reader)
     return data
 
 class ParseFastA(object):
     """Returns a record-by-record fastA parser analogous to file.readline()."""
-    def __init__(self,filePath,key=lambda x: x[1:].split()[0]):
+    def __init__(self,filePath,joinWith='',key=None):
         """Returns a record-by-record fastA parser analogous to file.readline().
-        Exmpl: parser.getNext()
-        key == func used to parse the recName from HeaderInfo."""
+        Exmpl: parser.next()
+        Its ALSO an iterator so "for rec in parser" works too!
+        
+        <joinWith> is string to use to join rec lines with.
+        joinWith='' results in a single line with no breaks (usually what you want!)
+        
+        <key> is func used to parse the recName from HeaderInfo.
+        """
+        
         self._file = open(filePath, 'rU')
-        self._key = key
+        if key:
+            self._key = key
+        else:
+            self._key = lambda x:x[1:].split()[0]
         self.bufferLine = None   # stores next headerLine between records.
+        self.joinWith = joinWith
     
-    def getNext(self):
+    def __iter__(self):
+        return self
+        
+    def next(self):
         """Reads in next element, parses, and does minimal verification.
         Returns: tuple: (seqName,seqStr)"""
         # ++++ Get A Record ++++
@@ -46,7 +65,7 @@ class ParseFastA(object):
         while 1:
             line = self._file.readline()
             if not line:
-                break
+                raise StopIteration
             elif line.startswith('>'):
                 self.bufferLine = line.strip('\n')
                 break
@@ -60,7 +79,7 @@ class ParseFastA(object):
             return None
         else:
             recHead = self._key(recHead)
-            return (recHead,''.join(recData))   
+            return (recHead,self.joinWith.join(recData))   
     
     def toDict(self):
         """Returns a single Dict populated with the fastaRecs
