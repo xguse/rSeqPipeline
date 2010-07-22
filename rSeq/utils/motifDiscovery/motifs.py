@@ -6,7 +6,9 @@ import exceptions
 import os
 import hashlib
 from motility import IUPAC,PWM
+import motility
 from cogent import DNA,SequenceCollection,Alignment
+from rSeq.utils.files import ParseFastA
 from rSeq.utils.stats import cumHypergeoP
 
 # ++++++++ useful constants ++++++++ 
@@ -14,6 +16,7 @@ ltr2wrd = {'A':'adenine',
            'C':'cytosine',
            'G':'guanine',
            'T':'thymine'}
+
 
 
 # ++++++++ classes ++++++++ 
@@ -26,10 +29,11 @@ class Motif(object,IUPAC,PWM):
         """Fill in soon.
         """
         # define some constants:
-        self.vaild_mTypes = {'scope':self._fromSCOPE,
-                             'xms':self._fromXMS,
-                             'IUPAC':self._fromIUPAC,
-                             'PWM':self._fromMotPWM,}
+        self.vaild_mTypes = {'scope':self._initSCOPE,
+                             'xms':self._initXMS,
+                             'IUPAC':self._initIUPAC,
+                             'PWM':self._initMotPWM,
+                             'jaspar':self._initJASPAR}
 
         self.bases = ('A','C','G','T')
 
@@ -59,11 +63,14 @@ class Motif(object,IUPAC,PWM):
         """Sets self.id after consensus and barcode have been defined."""
         if self.source == 'scope':
             self.id = '%s_%' % (self.consensus,int(float(self.sigvalue)))
+        elif self.source == 'jaspar':
+            self.id = '%s_%s' % (self.accession.replace('.','v'),self.name)
         else:
             self.id = '%s_%s' % (self.consensus,self.barcode[:6])
         
     def _getMotilityMatrix(self,pwm):
-        """Return matrix expected by motility."""
+        """Return matrix expected by motility from
+        self.pwm."""
         moMat = []
         for i in range(len(pwm['A'])):
             pos_i = []
@@ -81,11 +88,46 @@ class Motif(object,IUPAC,PWM):
         tot = sum(counts)
         return float(self.pwm[base][col])/tot
     
-    def _fromMotPWM(self,motilityStylePWM):
+    def _generateConsensus(self):
+        """Trick motility into making our consensus for us if need be.
+        You must have already called a motility __init__ to do this.
+        Specifically, self.matrix must exist."""
+        return motility.make_iupac_motif(self.generate_sites_over(self.max_score()*0.99))
+        
+    def _initJASPAR(self,motifData):
+        """Sets Motif's attributes using a JASPAR motif record."""
+        
+        def _buildPWM(dataString):
+            """Convert jaspars's matrix data to my format and
+            return the PWM/barcode. 
+            dataString = 'A  [0  3]\nC  [94 75]\nG  [1  0]\nT  [2 19]"""
+            
+            dataString = dataString.replace('[',' ')
+            dataString = dataString.replace(']',' ')
+            data       = dataString.split('\n')
+            data       = [x.split() for x in data]
+
+            pwm = {}
+            for d in data:
+                pwm[d[0]] = tuple([int(x) for x in d[1:]])
+            
+            bc = hashlib.md5(str(pwm)).hexdigest()
+            return pwm,bc
+        
+        acc,mName = motifData[0].lstrip('>').rstrip('\n').split()
+        self.accession = acc
+        self.name      = mName
+        self.pwm,self.barcode = _buildPWM(motifData[1]) 
+        PWM.__init__(self,self._getMotilityMatrix(self.pwm)) # call motility's PWM's init
+        self.consensus = self._generateConsensus()
+        self.source = 'jaspar'
+        self._setID()
+    
+    def _initMotPWM(self,motilityStylePWM):
         """Sets Motif's attributes using a motilityStylePWM."""
         raise NotImplementedError()
         
-    def _fromIUPAC(self,consensus):
+    def _initIUPAC(self,consensus):
         """Sets Motif's attributes using an IUPAC motif string."""
         IUPAC.__init__(self,consensus)
         
@@ -105,8 +147,9 @@ class Motif(object,IUPAC,PWM):
         self.consensus = self.motif
         self.pwm,self.barcode = _motil2myMat()
         self._setID()
+        self.accession = self.id
         
-    def _fromXMS(self,motifData):
+    def _initXMS(self,motifData):
         """Sets Motif's attributes using a single 'motif' node from a
         minidom object representing the XMS file."""
 
@@ -150,7 +193,7 @@ class Motif(object,IUPAC,PWM):
         self._setID()
         PWM.__init__(self,self._getMotilityMatrix(self.pwm))
 
-    def _fromSCOPE(self,motifData):
+    def _initSCOPE(self,motifData):
         """Sets Motif's attributes using a single SCOPE 'motif' data set."""
 
         def _scopeBaseWeights(base,motifData):
@@ -191,6 +234,7 @@ class Motif(object,IUPAC,PWM):
         self.genes      = tuple(sorted(list(set([x.getAttribute('gene') for x in motifData.getElementsByTagName('instance')])))) # (sorted tuple)
         self.instances  = _scopeInstances(motifData) # tuple of namedtuples keys=(sequence, strand<-/+>,start[negVersion],end[negVersion],geneName))
         self.name       = '%s_%s' % (self.sigvalue,self.consensus)
+        self.accession  = '%s_%s' % (self.consensus,int(float(self.sigvalue)))
         self.pwm,self.barcode = _scopePWM(motifData) # key(nulceotide),value(tuple of freqs at each position)
         self._setID()
         PWM.__init__(self,self._getMotilityMatrix(self.pwm))
@@ -205,8 +249,8 @@ class Motif(object,IUPAC,PWM):
             pType = 'FLOAT'
 
         pMtf  = 'BEGIN %s\n' % (pType)
-        pMtf += 'ID %s\n'    % (self.consensus)
-        pMtf += 'AC %s_%.5g\n' % (self.consensus,float(self.sigvalue))
+        pMtf += 'ID %s\n'    % (self.name)
+        pMtf += 'AC %s\n' % (self.accession)
         pMtf += 'DE %s\n'    % (self.consensus)
         pMtf += 'AL ACGT\n'
         pMtf += 'LE %s\n'    % (len(self.pwm['A']))
@@ -310,6 +354,18 @@ class Motif(object,IUPAC,PWM):
 # ++++++++ meta functions ++++++++ 
 
 # --- read and write motif files ---
+def parseJASPARfile(filePath):
+    """Returns list of Motif Objects derived from filePath."""
+
+    mList = []
+    # +++ JASPAR files are pseudo-FastA style +++
+    parser = ParseFastA(filePath,joinWith='\n',key=lambda x:x)
+    for rec in parser:
+        mList.append(Motif(rec,mType='jaspar'))
+    
+    return mList
+        
+
 def parseSCOPEfile(filePath):
     """Returns list of Motif Objects derived from filePath."""
     raise exceptions.NotImplementedError()
@@ -347,7 +403,9 @@ def writePoSSuMfile(motifList,outPath):
     oFile.close()
 # --- facilitate analyses with motifs ---
 
-def getHitDict(motifList,seqDict,pThresh=0.01,halfAT=0.25,halfGC=0.25):
+    
+
+def getEvalHitDict(motifList,seqDict,pThresh=0.01,halfAT=0.25,halfGC=0.25):
     """Return a dict of which motifs return more hits at given threshold than expected by
     the pval*kmers searched (E-val). 
     
@@ -376,7 +434,7 @@ def getHitDict(motifList,seqDict,pThresh=0.01,halfAT=0.25,halfGC=0.25):
     return hDict
                 
             
-def motifHyprGeoEnrichment(motifList,hitDict,foregroundSeqs):
+def motifHyprGeoEnrichment(motifList,hitDict,foregroundSeqs,expect=0):
     """Calculate the hypergeometric enrichment p-Value of each motif in motifList.
     n = # of positives in population
     i = # of positives in sample
@@ -385,13 +443,13 @@ def motifHyprGeoEnrichment(motifList,hitDict,foregroundSeqs):
 
     P(i) = sum([as i->N] (choose(n,i)choose(m,N-i))/choose(n+m,N))"""
     
-    def _get_n_and_i(motifID):
+    def _get_n_and_i(motifID,expect):
         """Number of positives in population and sample."""
         n = 0
         i = 0
         for item in hitDict.iteritems():
-            if item[1]:
-                if item[0][motifID] in foregroundSeqs:
+            if item[1].__getattribute__(motifID) > expect:
+                if item[0] in foregroundSeqs:
                     n += 1
                     i += 1
                 else:
@@ -408,11 +466,12 @@ def motifHyprGeoEnrichment(motifList,hitDict,foregroundSeqs):
     
     foregroundSeqs = set(foregroundSeqs)
     pVals = []
-    for m in motifList:
-        n,i = _get_n_and_i(m.id)
+    for mtf in motifList:
+        n,i = _get_n_and_i(mtf.id,expect)
         m = _get_m()
         N = _get_N()
-        pVals.append(tuple(m.id,cumHypergeoP(n,i,m,N)))
+        pVal = cumHypergeoP(n,i,m,N)
+        pVals.append(tuple([mtf.id,cumHypergeoP(n,i,m,N)]))
         
     return tuple(pVals)
     
