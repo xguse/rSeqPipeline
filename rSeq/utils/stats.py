@@ -1,7 +1,7 @@
 from decimal import Decimal
-# see bottom for conditional import of "bestChoose"
-
-
+import numpy as np
+import operator as o
+# see bottom for conditional import of "bestChoose"    
 
 def benjHochFDR(pVals,pValColumn=1,FDR=0.05):
     """
@@ -128,16 +128,18 @@ def binomialPval_gte(n,k,p):
 
 
 
-def seqStats(seqDict):
+def seqStats(seqDict,show=False):
     """Returns Dict of useful sequence statistics."""
     combinedSeq = ''
     
+    seqLens = []
     for each in seqDict:
+        seqLens.append(len(seqDict[each]))
         combinedSeq += seqDict[each]
     
     combinedSeq= combinedSeq.upper()
     
-    seqs       = len(seqDict)
+    seqNum     = len(seqDict)
     totNucs    = len(combinedSeq)
     aCnt       = combinedSeq.count('A')
     cCnt       = combinedSeq.count('C')
@@ -148,17 +150,48 @@ def seqStats(seqDict):
     n2tot      = float(nCnt)/len(combinedSeq)
     n2nonN     = float(nCnt)/nonNs
     percentGC  = (float(gCnt)+cCnt)/nonNs
+    avgLen     = np.mean(seqLens)
+    medLen     = np.median(seqLens)
+    stdvLen    = np.std(seqLens)
+    maxLen     = max(seqLens)
+    minLen     = min(seqLens)
+    pctMaxLen  = (np.array(seqLens)==maxLen).sum()/float(seqNum)
     
+    stats = {'seqNum':seqNum,
+             'totNucs':totNucs,
+             'aCnt':aCnt,
+             'cCnt':cCnt,
+             'gCnt':gCnt,
+             'tCnt':tCnt,
+             'nCnt':nCnt,
+             'nonNs':nonNs,
+             'n2tot':n2tot,
+             'n2nonN':n2nonN,
+             'percentGC':percentGC,
+             'avgLen':avgLen,
+             'medLen':medLen,
+             'stdvLen':stdvLen,
+             'maxLen':maxLen,
+             'minLen':minLen,
+             'pctMaxLen':pctMaxLen}
     
-    
-    return {'seqNum':seqs,
-            'totNucs':totNucs,
-            'aCnt':aCnt,
-            'cCnt':cCnt,
-            'gCnt':gCnt,
-            'tCnt':tCnt,
-            'nCnt':nCnt,
-            'nonNs':nonNs,
-            'n2tot':n2tot,
-            'n2nonN':n2nonN,
-            'percentGC':percentGC}
+    if show:
+        print '''Total Sequences:\t\t%s
+Total Nucleotides:\t\t%s
+Total Non-N Nucleotides:\t%s
+Total N Nucleotieds:\t\t%s
+Ns/tot:\t\t\t\t%s
+Ns/non-Ns:\t\t\t%s
+A count:\t\t\t%s
+C count:\t\t\t%s
+G count:\t\t\t%s
+T count:\t\t\t%s
+Percent GC:\t\t\t%s
+AvgLeng:\t\t\t%s
+MedLeng:\t\t\t%s
+StDvLeng:\t\t\t%s
+MaxLen:\t\t\t\t%s
+MinLen:\t\t\t\t%s
+PctMaxLen:\t\t\t%s''' % (seqNum,totNucs,nonNs,nCnt,n2tot,n2nonN,aCnt,cCnt,gCnt,tCnt,percentGC,avgLen,medLen,stdvLen,maxLen,minLen,pctMaxLen)
+
+    return stats
