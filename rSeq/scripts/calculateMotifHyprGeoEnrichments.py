@@ -201,7 +201,7 @@ if __name__ == "__main__":
     else:
         seqData = seqStats(seqDict,show=False)
     if opts.expect:
-        opts.expect = seqData['medLen']*opts.thresh
+        opts.expect = seqData['medLen']*opts.thresh*2
     else:
         opts.expect = 0
         
