@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import sys
 import os
 import optparse
@@ -5,7 +6,6 @@ import csv
 import random as r
 from time import time
 import math
-from cogent import LoadSeqs
 from matplotlib import pylab as pl
 from rSeq.utils.motifDiscovery.motifs import getEvalHitDict,parseSCOPEfile,parseXMSfile,motifHyprGeoEnrichment
 from rSeq.utils.motifDiscovery.rPossum import *
@@ -13,6 +13,7 @@ from rSeq.utils.stats import seqStats
 from rSeq.utils.errors import *
 from rSeq.utils.externals import mkdirp
 from rSeq.utils.misc import Bag
+from rSeq.utils.files import ParseFastA
 
 
 valideMotifTypes = {'scope':parseSCOPEfile,
@@ -21,11 +22,12 @@ valideMotifTypes = {'scope':parseSCOPEfile,
 
 def getSeqs(fastaPath,pLen):
     """Returns seqDict with correct lengths."""
-    cogSeqs = LoadSeqs(fastaPath,aligned=False, label_to_name=lambda x: x.split()[0])
-    sDict = cogSeqs.todict()
+    parser = ParseFastA(fastaPath)
+    sDict  = parser.toDict()
     
-    for s in sDict.iteritems():
-        sDict[s[0]]= s[1][-pLen:]
+    if pLen:
+        for s in sDict.iteritems():
+            sDict[s[0]]= s[1][-pLen:]
         
     return sDict
 
@@ -124,12 +126,8 @@ def makeMotifListFromPossum(pAccessions):
         mList.append(Bag({'accession':ac, 'id':ac}))
     return mList
     
-
-    
-if __name__ == "__main__":
-
-    
-    #+++++++++++ File Parseing Etc +++++++++++
+def main():
+        #+++++++++++ File Parseing Etc +++++++++++
     desc = """Calls the folowing funcs: 'add this'"""
     
     usage = """python %prog args"""
@@ -250,5 +248,10 @@ if __name__ == "__main__":
     if opts.verbose: sys.stdout.write('plotting histograms...\n')
     for m in motifList:
         plotHist(outBaseStr,outData,m.id)
+    
+if __name__ == "__main__":
+
+    main()
+
         
         
