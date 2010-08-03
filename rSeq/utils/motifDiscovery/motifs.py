@@ -9,7 +9,8 @@ from motility import IUPAC,PWM
 import motility
 from cogent import DNA,SequenceCollection,Alignment
 from rSeq.utils.files import ParseFastA
-from rSeq.utils.stats import cumHypergeoP
+from rSeq.utils.stats import cumHypergeoP,seqStats
+from rSeq.utils.errors import *
 
 # ++++++++ useful constants ++++++++ 
 ltr2wrd = {'A':'adenine',
@@ -52,7 +53,6 @@ class Motif(object,IUPAC,PWM):
         self.threshPval_target = None
         self.threshScore = None
         self.kmersOverThresh =None
-
 
         # init instance attributes with correct function
         self.vaild_mTypes[mType](motifData)
@@ -306,7 +306,7 @@ class Motif(object,IUPAC,PWM):
         """
         raise exceptions.NotImplementedError()
 
-    def scan(self,dnaSeq,pValThresh=0.01,halfAT=0.25,halfGC=0.25):
+    def scan(self,dnaSeq,pValThresh=0.01,halfAT=0.25,halfGC=0.25,log=False):
         """Return motility hits tuple.  You should use this instead of 'find'."""
         def _setThresh(newPval):
             """Return threshold that is approximately
@@ -401,8 +401,52 @@ def writePoSSuMfile(motifList,outPath):
         oFile.write('%s' % (m.toPossumMotif()))
     oFile.write('END')
     oFile.close()
+    
+    
+    
 # --- facilitate analyses with motifs ---
-
+def toTAMOmotifs(motifList,seqData=None):
+    """Returns a list of TAMO motif Objects when given
+    a list of the native motif Objs. 
+    If seqData is a dict, it is assumed to be
+    nucFreqs (seqData['A']==.26),
+    else, it is assumed to be a path to a seqPopulation
+    that the motifs will be used on for stats to be
+    calculated against."""
+    
+    from TAMO.MotifTools import Motif_from_counts
+    if not seqData:
+        if type(seqData) == type({}):
+            try:
+                aFreq = seqData['A']
+                cFreq = seqData['C']
+                gFreq = seqData['G']
+                tFreq = seqData['T']
+            except KeyError:
+                raise InvalidOptionError("toTAMOmotifs: Unrecognized key in seqData as dict.")
+        elif type(seqData) == type(''):
+            sDict = ParseFastA(seqData).toDict()
+            seqData = seqStats(sDict)
+            del(sDict)
+            tot = float(seqData['nonNs'])
+            aFreq = seqData['aCnt']/tot
+            cFreq = seqData['cCnt']/tot
+            gFreq = seqData['gCnt']/tot
+            tFreq = seqData['tCnt']/tot
+    else:
+        aFreq = 0.25
+        cFreq = 0.25
+        gFreq = 0.25
+        tFreq = 0.25
+    
+    tList = []
+    for m in motifList:
+        counts = []
+        for i in range(len(m)):
+            counts.append({'A':m.pwm['A'][i],'C':m.pwm['C'][i],'G':m.pwm['G'][i],'T':m.pwm['T'][i]})
+        t = Motif_from_counts(counts,beta=0.01,bg={'A':aFreq,'C':cFreq,'G':gFreq,'T':tFreq})
+        tList.append(t)
+    return tList
     
 
 def getEvalHitDict(motifList,seqDict,pThresh=0.01,halfAT=0.25,halfGC=0.25):
