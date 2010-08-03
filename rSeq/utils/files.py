@@ -35,6 +35,7 @@ class ParseFastA(object):
             self._key = lambda x:x[1:].split()[0]
         self.bufferLine = None   # stores next headerLine between records.
         self.joinWith = joinWith
+        self = iter(self)
     
     def __iter__(self):
         return self
@@ -86,7 +87,10 @@ class ParseFastA(object):
         contained in self._file."""
         fasDict = {}
         while 1:
-            fasRec = self.getNext()
+            try:
+                fasRec = self.next()
+            except StopIteration:
+                break
             if fasRec:
                 if not fasRec[0] in fasDict:
                     fasDict[fasRec[0]] = fasRec[1]
