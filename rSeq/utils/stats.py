@@ -64,8 +64,10 @@ def choose(n, k):
 # determine whether we can use gmpy and set "bestChoose" to that or the standby.
 try:
     from gmpy import comb as bestChoose #timeit says gmpy.comb is 10 times faster than choose!
+    print "bestChoose is 'comb' from 'gmpy'."
 except ImportError:
     bestChoose = choose # timeit says that choose is 7% faster than binComb
+    print "bestChoose is 'choose' from 'rSeq'."
     
     
 
