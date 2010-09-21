@@ -2,16 +2,18 @@ import sys
 from rSeq.utils.errors import *
 from rSeq.utils.externals import runExternalApp
 
-def samCH2supCntg(samFile,outFile,cnvsnDict):
-    from gusPyCode.defs.mosqData.AaCntgCvrt import supContigConvert# FIX THIS!
-    """Convert CHxxx to superContig1.xxx"""
+
+
+#def samCH2supCntg(samFile,outFile,cnvsnDict):
+    #from gusPyCode.defs.mosqData.AaCntgCvrt import supContigConvert# FIX THIS!
+    #"""Convert CHxxx to superContig1.xxx"""
     
-    outFile = open(outFile, 'w')
+    #outFile = open(outFile, 'w')
     
-    for line in open(samFile, 'rU'):
-        if line.startswith('@SQ'):
-            line = line.split('\t')
-            line[1] = line[1].split(':')[0],':',cnvsnDict[line[1].split(':')[1]]
+    #for line in open(samFile, 'rU'):
+        #if line.startswith('@SQ'):
+            #line = line.split('\t')
+            #line[1] = line[1].split(':')[0],':',cnvsnDict[line[1].split(':')[1]]
 
 def cigarStr2AlignCoords(cigarString,minCoord,maxCoord,alignStrand,cigKind='ensembl',intron='I'):
     """Returns List of coordinate tuples for each block in form of:
