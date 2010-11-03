@@ -204,8 +204,9 @@ class Motif(object,IUPAC,PWM):
             for b in bases:
                 if b.attributes.getNamedItem('name').value.upper().startswith(base):
                     for w in b.getElementsByTagName('weight'):
+                        #wVal = w.childNodes[0].data
                         baseWeights.append(float(w.childNodes[0].data))
-                        break
+                        #break
             return tuple(baseWeights)
 
         def _scopePWM(motifData):
@@ -368,8 +369,18 @@ def parseJASPARfile(filePath):
 
 def parseSCOPEfile(filePath):
     """Returns list of Motif Objects derived from filePath."""
-    raise exceptions.NotImplementedError()
+    #raise exceptions.NotImplementedError()
+    mList = []
 
+    # Get SCOPE data into dom obj
+    scope = minidom.parse(filePath)
+    motifs = scope.getElementsByTagName('motif')
+
+    for m in motifs:
+        mList.append(Motif(m, mType='scope'))
+
+    return mList
+    
 def parseXMSfile(filePath):
     """Returns list of Motif Objects derived from filePath."""
 
@@ -445,6 +456,11 @@ def toTAMOmotifs(motifList,seqData=None):
         for i in range(len(m)):
             counts.append({'A':m.pwm['A'][i],'C':m.pwm['C'][i],'G':m.pwm['G'][i],'T':m.pwm['T'][i]})
         t = Motif_from_counts(counts,beta=0.01,bg={'A':aFreq,'C':cFreq,'G':gFreq,'T':tFreq})
+        t.id = m.id
+        try:
+            t.sigvalue = m.sigvalue
+        except AttributeError:
+            pass
         tList.append(t)
     return tList
     
@@ -519,5 +535,18 @@ def motifHyprGeoEnrichment(motifList,hitDict,foregroundSeqs,expect=0):
         
     return tuple(pVals)
     
-
+def motifHyprGeoEnrichmentTAMO(motifList,probeset,foregroundSeqs,factor=0.75,bestFactor=False):
+    """Calculate the hypergeometric enrichment p-Value of each motif in motifList using TAMO.
+    
+    **FUTURE: allow use bestFactor**"""
+    
+    foregroundSeqs = set(foregroundSeqs)
+    pVals = []
+    for mtf in motifList:
+        if not bestFactor:
+            pVals.append(tuple([mtf.id,probeset.Enrichment(mtf,foregroundSeqs,factor=factor)]))
+        else:
+            raise NotImplementedError('motifHyprGeoEnrichmentTAMO(bestFactor!=False) not yet Implemented!')
+        
+    return tuple(pVals)
     
