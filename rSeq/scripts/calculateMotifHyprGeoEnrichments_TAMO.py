@@ -160,8 +160,8 @@ def main():
                       help="""Fractional score threshold for motif score cut-off (default=%default).""")
     parser.add_option('--promoters', type='str',default=None,
                       help="""Path to fasta file with promoter population (default=%default).""")
-    ##parser.add_option('--plen', type='int',default=1000,
-                      ##help="""Max promoter length to use -- starting from 3'-end!! (default=%default).""")
+    parser.add_option('--plen', type='int',default=None,
+                      help="""Max promoter length to use -- starting from 3'-end!! (default=%default).""")
     parser.add_option('--genes', type='string',default=None,
                       help="""Unbroken string of gene/Tx names representing the true forground set, sep=','. Exp: 'gene,gene,gene' (default=%default).""")
     parser.add_option('--job', type='string',default='int(time())',
@@ -198,12 +198,14 @@ def main():
         --motif-type
         --thresh""")
     if not opts.motif_filter.startswith('lambda x:'):
-        raise InvalidOptionError("**ERROR: the --motif-function option must begin with 'lambda x:'")
+        raise InvalidOptionError("**ERROR: the --motif-function option must begin with 'lambda x:'**")
     else:
         opts.motif_filter = eval(opts.motif_filter)
-    ##else:
-        ##if not opts.motifs:
-            ##raise InvalidOptionError("When using --from-possum, --motifs should be the PSSM file used to generate this particular hit set.")
+    if opts.plen:
+        try:
+            opts.plen = int(opts.plen)
+        except ValueError:
+            raise InvalidOptionError("**ERROR: the --plen option must be a number**")
     
     # +++++ Lets Begin +++++
     if opts.verbose: sys.stdout.write('\n%s\n\n' % (' '.join(sys.argv)))
@@ -214,6 +216,15 @@ def main():
     
     if opts.verbose: sys.stdout.write('building seqDict...\n')
     probeset = getProbSet(opts.promoters,opts.thresh)
+    #print len(probeset.probes.items()[0][1])
+    #print probeset.probes.items()[0][1]
+    if opts.plen:
+        if opts.verbose: sys.stdout.write("adjusting promoter lengths to no more than %s and conserving the 3' ends...\n" % (opts.plen))
+        for s in probeset.probes.iteritems():
+            probeset.probes[s[0]]= s[1][-opts.plen:]
+        #print len(probeset.probes.items()[0][1])
+        #print probeset.probes.items()[0][1]
+            
     seqDict  = getSeqs(probeset)
     if opts.check_seqs:
         seqStats(seqDict,show=True)
@@ -228,18 +239,6 @@ def main():
     motifList = filterMotifs(motifList,key=opts.motif_filter)
     postFilt  = len(motifList)
     if opts.verbose: sys.stdout.write('using %s of %s motifs...\n' % (postFilt,preFilt))
-
-    
-
-    ##if opts.verbose: sys.stdout.write('building hitDict...\n')
-    ##motifHits      = getEvalHitDict(motifList,seqDict,pThresh=opts.thresh,halfAT=halfAT,halfGC=halfGC)
-    ##else:
-        ### -- Oh thank god, no!  All I have to do is some parseing! --
-        ##if opts.verbose: sys.stdout.write('skipping to building hitDict step...\n')
-        ##pACs        = getPossumProfileACs(opts.motifs)
-        ##possumTable = getPossumHitTable(opts.from_possum,headers=possumHeaders)
-        ##motifHits   = getPossumHitDict(possumTable,seqDict.keys(),pACs)
-        ##motifList   = makeMotifListFromPossum(pACs) # create list of DummyPlug MotifObjs for compatibility
     
     if opts.verbose: sys.stdout.write('getting forgroundSeqs...\n')
     foregroundSeqs = getForeground(opts.genes)
