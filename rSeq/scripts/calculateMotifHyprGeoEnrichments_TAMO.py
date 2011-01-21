@@ -8,6 +8,7 @@ from time import time
 import math
 from matplotlib import pylab as pl
 from TAMO.MotifMetrics import ProbeSet
+from TAMO.MotifTools import load as tamoLoad
 from rSeq.utils.motifDiscovery.motifs import getEvalHitDict,parseSCOPEfile,parseXMSfile,motifHyprGeoEnrichmentTAMO,toTAMOmotifs
 from rSeq.utils.motifDiscovery.rPossum import *
 from rSeq.utils.stats import seqStats
@@ -18,7 +19,8 @@ from rSeq.utils.files import ParseFastA
 
 
 valideMotifTypes = {'scope':parseSCOPEfile,
-                    'xms':parseXMSfile}
+                    'xms'  :parseXMSfile,
+                    'tamo' :tamoLoad}
 
 def getProbSet(fastaPath,factor):
     """Returns ProbeSet object with seqDict and methods."""
@@ -33,8 +35,18 @@ def getMotifs(pathToMotifFile,nucFreqs,fileType='scope'):
     """Return list of motif objects."""
     if fileType not in valideMotifTypes:
         raise InvalidOptionError()
-    nativeMotifs = valideMotifTypes[fileType](pathToMotifFile)
-    tMotifs      = toTAMOmotifs(nativeMotifs,seqData=nucFreqs)
+    if fileType != "tamo":
+        nativeMotifs = valideMotifTypes[fileType](pathToMotifFile)
+        tMotifs      = toTAMOmotifs(nativeMotifs,seqData=nucFreqs)
+    else:
+        tMotifs      = valideMotifTypes[fileType](pathToMotifFile)
+        if not type(nucFreqs) == type(dict):
+                raise InvalidOptionError("**ERROR: in getMotifs(), nucFreqs must be type(dict) when motif type is TAMO**")
+        for i in range(len(tMotifs)):
+            tMotifs[i].background = nucFreqs
+            tMotifs[i]._compute_ll()
+            tMotifs[i].id = "%s_%s" % (tMotifs[i].__repr__()[:-4],tMotifs[i].barcode[:6])
+            
     return tMotifs
 
 def filterMotifs(motifList,key=None):
