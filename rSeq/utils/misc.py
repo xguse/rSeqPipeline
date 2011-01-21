@@ -56,4 +56,17 @@ def pVal4mari(tabPath,tTx,tTxDN,tTxUP):
         
         
     
-    
+
+class SitRep(object): # Situation Report
+    """Capture and redirect the script's stdOut/stdErr streams to a user defined
+    location and prepend which stream the info was generated from along with some
+    useful information."""
+    def __init__(self,filePath):
+        import sys
+        import datetime
+        self.out = open(filePath, 'a')
+        sys.stderr = stdErr
+        sys.stdout = stdOut
+
+    def stdOut(self):
+        """"""
