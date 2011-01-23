@@ -33,8 +33,12 @@ def start_sitrep(outDir, verbose=False):
     else:
         outFile = open('%s/%s' % (outDir,logFiles[0]), "a")
     # Inform the file of what command and args were used to call my host script
+    callTime = datetime.datetime.now().strftime('%H:%M:%S')
     outFile.write('[NEW CMD] [%s]  %s\n' %
-        (datetime.datetime.now().strftime('%H:%M:%S'),' '.join(sys.argv)))
+        (callTime,' '.join(sys.argv)))
+    #if verbose:
+        #sys.__stdout__.write('[NEW CMD] [%s]  %s\n' %
+        #(callTime,' '.join(sys.argv)))
 
     # Redirect stdOut/stErr
     sys.stdout = StdOut(outFile,verbose=verbose)
