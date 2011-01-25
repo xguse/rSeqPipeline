@@ -12,7 +12,20 @@ class ArgumentError(SitRepError):
 
 def start_sitrep(outDir, verbose=False):
     """Prep and initilize new stdErr/stdOut streams and open log file."""
-    # Should I start a new file or append to an existing one?
+    # Inform user of what I do
+    print """
+    NOTE: The sitRep module has been activated!  This redirects this script's
+    stdout and stderr to a central location in order to aid in debugging
+    and record keeping.
+    
+    The full log is located in the following directory:
+    
+    %s""" % (outDir)
+    
+    
+    # Should I start a new file or append to an existing one?    
+    now = datetime.datetime.now().isoformat()
+    
     try:
         outDirContents = os.listdir(outDir)
     except OSError:
@@ -28,14 +41,13 @@ def start_sitrep(outDir, verbose=False):
     if logFileLen > 1:
         raise SitRepError("startSitRep() found more than one sitrep log!")
     elif logFileLen == 0:
-        now = datetime.datetime.now().isoformat()
         outFile = open("%s/%s.sitrep.log" % (outDir, now), "a")
     else:
         outFile = open('%s/%s' % (outDir,logFiles[0]), "a")
     # Inform the file of what command and args were used to call my host script
     callTime = datetime.datetime.now().strftime('%H:%M:%S')
-    outFile.write('[NEW CMD] [%s]  %s\n' %
-        (callTime,' '.join(sys.argv)))
+    outFile.write('[NEW CMD] [%s]  [DATE: %s]  %s\n' %
+        (callTime,now,' '.join(sys.argv)))
     #if verbose:
         #sys.__stdout__.write('[NEW CMD] [%s]  %s\n' %
         #(callTime,' '.join(sys.argv)))
@@ -51,25 +63,31 @@ class StreamHandler(object):
         if not isinstance(outFile,file):
             raise ArgumentError("sitRep.StreamHandler() requires 'outFile' to be file object!")
         self.out = outFile
+        
+    def  __getattr__(self,attribute):
+        """Provide direct access to the attributes of the file obj
+        located at self.out."""
+        return self.out.__getattribute__(attribute)
+    
     def __del__(self):
-        """Clean-up meathod to make sure that all data is flushed
+        """Clean-up method to make sure that all data is flushed
         to file and it is closed cleanly."""
 
         try:
-            self.out.write('==========\n')
+            self.out.write('==========\n\n')
             self.flush()
             self.close()
         except ValueError:
             pass
 
-    def write(self):
-        """Dummy method to be over-ridden by children"""
-    def flush(self):
-        """Flush current lines to self.out."""
-        self.out.flush()    
-    def close(self):
-        """Close self.out."""
-        self.out.close()
+    #def write(self):
+        #"""Dummy method to be over-ridden by children"""
+    #def flush(self):
+        #"""Flush current lines to self.out."""
+        #self.out.flush()    
+    #def close(self):
+        #"""Close self.out."""
+        #self.out.close()
         
 class StdOut(StreamHandler):
     """Mimic a file obj but include useful info in output."""
@@ -78,7 +96,7 @@ class StdOut(StreamHandler):
         StreamHandler.__init__(self,outFile,verbose)
 
     def write(self,text):
-        prefix = datetime.datetime.now().strftime('[out]     [%H:%M:%S]')
+        prefix = datetime.datetime.now().strftime('[out]   [%H:%M:%S]')
         for line in text.split('\n'):
             if line:
                 self.out.write("%s  %s\n" % (prefix,line))
@@ -91,7 +109,7 @@ class StdErr(StreamHandler):
         StreamHandler.__init__(self,outFile,verbose)
 
     def write(self,text):
-        prefix = datetime.datetime.now().strftime('[*err*]   [%H:%M:%S]')
+        prefix = datetime.datetime.now().strftime('[ERR]   [%H:%M:%S]')
         for line in text.split('\n'):
             if line:
                 self.out.write("%s  %s\n" % (prefix,line))
