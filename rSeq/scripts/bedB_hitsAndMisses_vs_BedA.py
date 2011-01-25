@@ -56,9 +56,9 @@ in each 'side' of the double output.  'side' = keep the 'right' or
 
 
 
-print divByWindow(args[0],
-                  args[1],
-                  win=[int(x) for x in opts.win.split(',')],
-                  cols=[int(x) for x in opts.cols.split(',')],
-                  side=opts.side,
-                  outDir=opts.out)
+    print divByWindow(args[0],
+                      args[1],
+                      win=[int(x) for x in opts.win.split(',')],
+                      cols=[int(x) for x in opts.cols.split(',')],
+                      side=opts.side,
+                      outDir=opts.out)
