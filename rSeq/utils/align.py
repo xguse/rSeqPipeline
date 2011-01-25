@@ -1,6 +1,8 @@
 import sys
+import pysam
 from rSeq.utils.errors import *
-from rSeq.utils.externals import runExternalApp
+from rSeq.utils.externals import runExternalApp,mkdirp
+from rSeq.utils.misc import whoami
 
 
 
@@ -241,10 +243,302 @@ def exonerateCigar2BEDline(cigarLine,rgb="0,0,0"):
            (chrom,chromStart,chromEnd,name,score,strand,
             thickStart,thickEnd,itemRgb,blockCount,blockSizes,blockStarts)
     
-def bowtieMakeIndex(optionsHere):
-    """Create bowtie indexes from new fasta set."""
+
+
+########## BOWTIE ##########
+
+def bowtie_index(reference_in,ebwt_outfile_base,runDir,options=None):
+    """Create bowtie indexes from new fasta set.
+    options : quoted string representing valid cmd line bowtie-build options
+    runDir  : path to dir to place stdErr/stdOut logs - all steps of pipeline scripts should share same runDir
     
-def bowtieAlign(optionsHere):
-    """Run alignment of fastQ to bowtie index."""
+    ----------
+    bowtie-build help text:
+    
+    Usage: bowtie-build [options]* <reference_in> <ebwt_outfile_base>
+        reference_in            comma-separated list of files with ref sequences
+        ebwt_outfile_base       write Ebwt data to files with this dir/basename
+    Options:
+        -f                      reference files are Fasta (default)
+        -c                      reference sequences given on cmd line (as <seq_in>)
+        -C/--color              build a colorspace index
+        -a/--noauto             disable automatic -p/--bmax/--dcv memory-fitting
+        -p/--packed             use packed strings internally; slower, uses less mem
+        -B                      build both letter- and colorspace indexes
+        --bmax <int>            max bucket sz for blockwise suffix-array builder
+        --bmaxdivn <int>        max bucket sz as divisor of ref len (default: 4)
+        --dcv <int>             diff-cover period for blockwise (default: 1024)
+        --nodc                  disable diff-cover (algorithm becomes quadratic)
+        -r/--noref              don't build .3/.4.ebwt (packed reference) portion
+        -3/--justref            just build .3/.4.ebwt (packed reference) portion
+        -o/--offrate <int>      SA is sampled every 2^offRate BWT chars (default: 5)
+        -t/--ftabchars <int>    # of chars consumed in initial lookup (default: 10)
+        --ntoa                  convert Ns in reference to As
+        --seed <int>            seed for random number generator
+        -q/--quiet              verbose output (for debugging)
+        -h/--help               print detailed description of tool and its options
+        --usage                 print this usage message
+        --version               print version information and quit
+
+    """
+    
+    # make runDir if it does not yet exist
+    mkdirp(runDir)
+    
+    # Construct cmdArgs
+    if options:
+        cmdArgs = "%s %s %s" % (options,reference_in,ebwt_outfile_base)
+    # Run bowtie-build and capture output
+    btBuildResults = runExternalApp('bowtie-build',cmdArgs)
+    
+    # Report bowtie-build stdout and stderr
+    if btBuildResults[0]:
+        print('[%s] %s' % (whoami(),btBuildResults[0]))
+    if btBuildResults[1]:
+        sys.stderr('[%s] %s' % (whoami(),btBuildResults[1]))
+        
+    return btBuildResults
+    
+def bowtie_align(ebwt,readsString,hit,runDir,options=None):
+    """Run alignment of fastQ to bowtie index.
+    options     : quoted string representing valid cmd line bowtie-build options
+    runDir      : path to dir to place stdErr/stdOut logs - all steps of pipeline scripts should share same runDir
+    readsString : appropriate quoted string representing which fastq files to use (see bowtie -h).
+    
+    ----------
+    bowtie help text:
+    
+    Usage: 
+    bowtie [options]* <ebwt> {-1 <m1> -2 <m2> | --12 <r> | <s>} [<hit>]
+  
+    <m1>    Comma-separated list of files containing upstream mates (or the
+            sequences themselves, if -c is set) paired with mates in <m2>
+    <m2>    Comma-separated list of files containing downstream mates (or the
+            sequences themselves if -c is set) paired with mates in <m1>
+    <r>     Comma-separated list of files containing Crossbow-style reads.  Can be
+            a mixture of paired and unpaired.  Specify "-" for stdin.
+    <s>     Comma-separated list of files containing unpaired reads, or the
+            sequences themselves, if -c is set.  Specify "-" for stdin.
+    <hit>   File to write hits to (default: stdout)
+    Input:
+      -q                 query input files are FASTQ .fq/.fastq (default)
+      -f                 query input files are (multi-)FASTA .fa/.mfa
+      -r                 query input files are raw one-sequence-per-line
+      -c                 query sequences given on cmd line (as <mates>, <singles>)
+      -C                 reads and index are in colorspace
+      -Q/--quals <file>  QV file(s) corresponding to CSFASTA inputs; use with -f -C
+      --Q1/--Q2 <file>   same as -Q, but for mate files 1 and 2 respectively
+      -s/--skip <int>    skip the first <int> reads/pairs in the input
+      -u/--qupto <int>   stop after first <int> reads/pairs (excl. skipped reads)
+      -5/--trim5 <int>   trim <int> bases from 5' (left) end of reads
+      -3/--trim3 <int>   trim <int> bases from 3' (right) end of reads
+      --phred33-quals    input quals are Phred+33 (default)
+      --phred64-quals    input quals are Phred+64 (same as --solexa1.3-quals)
+      --solexa-quals     input quals are from GA Pipeline ver. < 1.3
+      --solexa1.3-quals  input quals are from GA Pipeline ver. >= 1.3
+      --integer-quals    qualities are given as space-separated integers (not ASCII)
+    Alignment:
+      -v <int>           report end-to-end hits w/ <=v mismatches; ignore qualities
+        or
+      -n/--seedmms <int> max mismatches in seed (can be 0-3, default: -n 2)
+      -e/--maqerr <int>  max sum of mismatch quals across alignment for -n (def: 70)
+      -l/--seedlen <int> seed length for -n (default: 28)
+      --nomaqround       disable Maq-like quality rounding for -n (nearest 10 <= 30)
+      -I/--minins <int>  minimum insert size for paired-end alignment (default: 0)
+      -X/--maxins <int>  maximum insert size for paired-end alignment (default: 250)
+      --fr/--rf/--ff     -1, -2 mates align fw/rev, rev/fw, fw/fw (default: --fr)
+      --nofw/--norc      do not align to forward/reverse-complement reference strand
+      --maxbts <int>     max # backtracks for -n 2/3 (default: 125, 800 for --best)
+      --pairtries <int>  max # attempts to find mate for anchor hit (default: 100)
+      -y/--tryhard       try hard to find valid alignments, at the expense of speed
+      --chunkmbs <int>   max megabytes of RAM for best-first search frames (def: 64)
+    Reporting:
+      -k <int>           report up to <int> good alignments per read (default: 1)
+      -a/--all           report all alignments per read (much slower than low -k)
+      -m <int>           suppress all alignments if > <int> exist (def: no limit)
+      -M <int>           like -m, but reports 1 random hit (MAPQ=0); requires --best
+      --best             hits guaranteed best stratum; ties broken by quality
+      --strata           hits in sub-optimal strata aren't reported (requires --best)
+    Output:
+      -t/--time          print wall-clock time taken by search phases
+      -B/--offbase <int> leftmost ref offset = <int> in bowtie output (default: 0)
+      --quiet            print nothing but the alignments
+      --refout           write alignments to files refXXXXX.map, 1 map per reference
+      --refidx           refer to ref. seqs by 0-based index rather than name
+      --al <fname>       write aligned reads/pairs to file(s) <fname>
+      --un <fname>       write unaligned reads/pairs to file(s) <fname>
+      --max <fname>      write reads/pairs over -m limit to file(s) <fname>
+      --suppress <cols>  suppresses given columns (comma-delim'ed) in default output
+      --fullref          write entire ref name (default: only up to 1st space)
+    Colorspace:
+      --snpphred <int>   Phred penalty for SNP when decoding colorspace (def: 30)
+         or
+      --snpfrac <dec>    approx. fraction of SNP bases (e.g. 0.001); sets --snpphred
+      --col-cseq         print aligned colorspace seqs as colors, not decoded bases
+      --col-cqual        print original colorspace quals, not decoded quals
+      --col-keepends     keep nucleotides at extreme ends of decoded alignment
+    SAM:
+      -S/--sam           write hits in SAM format
+      --mapq <int>       default mapping quality (MAPQ) to print for SAM alignments
+      --sam-nohead       supppress header lines (starting with @) for SAM output
+      --sam-nosq         supppress @SQ header lines for SAM output
+      --sam-RG <text>    add <text> (usually "lab=value") to @RG line of SAM header
+    Performance:
+      -o/--offrate <int> override offrate of index; must be >= index's offrate
+      -p/--threads <int> number of alignment threads to launch (default: 1)
+      --mm               use memory-mapped I/O for index; many 'bowtie's can share
+      --shmem            use shared mem for index; many 'bowtie's can share
+    Other:
+      --seed <int>       seed for random number generator
+      --verbose          verbose output (for debugging)
+      --version          print version information and quit
+      -h/--help          print this usage message
+
+    """
+    # make runDir if it does not yet exist
+    mkdirp(runDir)
+    
+    # Construct cmdArgs
+    if options:
+        cmdArgs = "%s %s  %s %s" % (options,ebwt,readsString,hit)
+    else:
+        cmdArgs = "%s %s %s" % (ebwt,readsString,hit)
+        
+    # Run and capture output
+    print "Setting up bowtie call with the following cmd:\n\t\tbowtie %s" % (cmdArgs)
+    btResults = runExternalApp('bowtie',cmdArgs)
+    
+    # Report stdout and stderr
+    if btResults[0]:
+        for line in btResults[0].split('\n'):
+            print('[%s] %s' % (whoami(),line))
+        
+    if btResults[1]:
+        for line in btResults[1].split('\n'):
+            sys.stderr.write('[%s] %s' % (whoami(),line))
+        
+    return btResults
+
+
+########## SAMTOOLS ##########
+
+def run_samtools(tool,argsList):
+    """Core wrapper for calls to samtools and associated
+    stderr/stdout reporting.  See specific func defs for each
+    tool's samtool's help text.
+    
+    tool     : sort,view,index,etc...
+    argsList : list obj with appropriatly structured args for samtools "tool"
+    """
+    # Construct cmdArgs
+    cmdArgs = "%s %s" % (tool," ".join(argsList))
+        
+    # Run and capture output
+    print "Setting up samtools call with the following cmd:\n\tsamtools %s" % (cmdArgs)
+    results = runExternalApp('samtools',cmdArgs)
+    
+    # Report stdout and stderr
+    if results[0]:
+        for line in results[0].split('\n'):
+            print('[%s] %s' % (whoami(),line))
+        
+    if results[1]:
+        for line in results[1].split('\n'):
+            sys.stderr.write('[%s] %s' % (whoami(),line))
+        
+    return results
+
+def samtools_view(argsList):
+    """Wrapper for samtools "view".
+    
+    argsList  :  list obj with appropriatly structured args for samtools "view".
+    
+    ----------
+    samtools view help text:
+    
+    Usage:   samtools view [options] <in.bam>|<in.sam> [region1 [...]]
+
+    Options: -b       output BAM
+             -h       print header for the SAM output
+             -H       print header only (no alignments)
+             -S       input is SAM
+             -u       uncompressed BAM output (force -b)
+             -x       output FLAG in HEX (samtools-C specific)
+             -X       output FLAG in string (samtools-C specific)
+             -c       print only the count of matching records
+             -t FILE  list of reference names and lengths (force -S) [null]
+             -T FILE  reference sequence file (force -S) [null]
+             -o FILE  output file name [stdout]
+             -R FILE  list of read groups to be outputted [null]
+             -f INT   required flag, 0 for unset [0]
+             -F INT   filtering flag, 0 for unset [0]
+             -q INT   minimum mapping quality [0]
+             -l STR   only output reads in library STR [null]
+             -r STR   only output reads in read group STR [null]
+             -?       longer help
+
+    
+    """
+        
+    return run_samtools('view',argsList)
+
+def samtools_sort(argsList):
+    """Wrapper for samtools "sort".
+    
+    argsList  :  list obj with appropriatly structured args for samtools "sort".
+    
+    ----------
+    samtools sort help text:
+    
+    Usage: samtools sort [-on] [-m <maxMem>] <in.bam> <out.prefix>
+    """
+    
+    return run_samtools('sort',argsList)
+
+def samtools_index(argsList):
+    """Wrapper for samtools "index".
+    
+    argsList  :  list obj with appropriatly structured args for samtools "index".
+    
+    ----------
+    samtools sort help text:
+    
+    Usage: samtools index <in.bam> [out.index]
+    """
+    
+    return run_samtools('index',argsList)
+
+def pysamtools_call(funcName,argsList):
+    """
+    ALERT: pysam's encapsulation of AT LEAST 'samtools view'
+        hijack's stderr/stdout which among other problems (unfaithful interpretation of commandline 
+        arguments like view's "-o" and "-S") make the following code unreliable for now.
     
     
+    Wrapper for pysam."funcName"() that adds useful reporting information.
+    
+    argsList  :  list obj with appropriatly structured args for pysam."funcName"()
+    """
+    if 1==1:
+        raise NotImplementedError("""ERROR: pysam's encapsulation of AT LEAST 'samtools view'
+        hijack's stderr/stdout which among other problems (unfaithful interpretation of commandline 
+        arguments like view's "-o" and "-S") make the following code unreliable for now.""")
+    # Make sure that the funcName exists in samtools
+    if funcName not in pysam.SAMTOOLS_DISPATCH:
+        raise InvalidOptionError(optVal=funcName,optName="funcName",validVals=pysam.SAMTOOLS_DISPATCH.keys())
+        
+    print "Setting up samtools call with the following cmd:\n\tsamtools %s %s" % (funcName,' '.join(argsList)) 
+    # Construct correct pysam tool agent type and run the command
+    dispatcher = pysam.SAMTOOLS_DISPATCH[funcName]
+    pysamAgent = pysam.SamtoolsDispatcher(dispatcher[0],dispatcher[1])
+    
+    results = pysamAgent(' '.join(['"%s"' % (x) for x in argsList]))
+
+    # Communicate StdOut
+    for line in results[2].split('\n'):
+        print('[%s:%s] %s' % (whoami(),funcName,line))
+    # Communicate StdErr
+    for line in results[1].split('\n'):
+        sys.stderr.write('[%s:%s] %s' % (whoami(),funcName,line))
+    
+    return results
