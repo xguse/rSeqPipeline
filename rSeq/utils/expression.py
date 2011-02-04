@@ -9,5 +9,5 @@ def get_feature_reads(pyCgFeat,bams):
     bams     : list of paths to BAM files (union of files will be used will be use)
     """
     raise NotImplementedError()
-def 
+
     
