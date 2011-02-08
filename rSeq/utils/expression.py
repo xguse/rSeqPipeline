@@ -8,6 +8,12 @@ def get_feature_reads(pyCgFeat,bams):
     pyCgFeat : pycogent feature object (exon,gene,etc)
     bams     : list of paths to BAM files (union of files will be used will be use)
     """
-    raise NotImplementedError()
-
+    if 1==1:
+        raise NotImplementedError("ERROR: this function is under development.")
     
+    # pysam-ize BAM files
+    bams = [pysam.Samfile( x, "rb" ) for x in bams]
+    
+    # Record feature info
+    
+    #
