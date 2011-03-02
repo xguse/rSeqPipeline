@@ -6,15 +6,45 @@ import sys
 import os
 import optparse
 
-import pysam
+from iniparse import SafeConfigParser
 
 from rSeq.utils.errors import *
 from rSeq.utils.externals import mkdirp,runExternalApp
 from rSeq.utils.align import bowtie_index
 from rSeq.utils.sitRep import start_sitrep
 
-def init_dir_structure():
-    """"""
+def init_dir_structure(spcName,versionID,baseDir,isCurrent=False):
+    """Ensure that the correct directory structure exists to accept
+    the genome and index data files.  Create anything that does not already exist.
+    If isCurrent != False: soft link the versionID dir as "current"
+    
+    Example args:
+    spcName = 'aedes_aegypti'
+    versionID   = 'release_7'
+    baseDir     = '/home/data'
+    """
+    
+    spcVerDir   = '%s/genomes/%s/%s' % (baseDir,spcName,versionID)
+    fastas      = '%s/fasta/' % (spcVerDir)
+    annotations = '%s/annotations/' % (spcVerDir)
+    mysql       = '%s/mysql/' % (spcVerDir)
+    indexes     = '%s/indexes/' % (baseDir)
+    
+    print "creating dir: %s" % (fastas)
+    mkdirp(fastas)
+    print "creating dir: %s" % (annotations)
+    mkdirp(annotations)
+    print "creating dir: %s" % (mysql)
+    mkdirp(mysql)
+    print "creating dir: %s" % (indexes)
+    mkdirp(indexes)
+    
+    
+    if isCurrent:
+        print "creating sym link from %s to 'current' because <isCurrent> is set to True" % (spcVerDir)
+        os.symlink(spcVerDir, '%s/genomes/%s/current' % (baseDir,spcName))
+    
+    
 
 def blast_formatdb():
     """"""

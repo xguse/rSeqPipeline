@@ -283,6 +283,7 @@ def bowtie_index(reference_in,ebwt_outfile_base,runDir,options=None):
     """
     
     # make runDir if it does not yet exist
+    print "creating: %s" % (runDir)
     mkdirp(runDir)
     
     # Construct cmdArgs
