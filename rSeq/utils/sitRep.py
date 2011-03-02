@@ -5,6 +5,9 @@ import os
 import sys
 import datetime
 
+# TODO: option to write all logs to one place and soft link to outDir
+
+
 class SitRepError(Exception):
     """Generic Error Class for SitRep"""
 class ArgumentError(SitRepError):
