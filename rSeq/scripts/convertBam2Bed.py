@@ -1,42 +1,33 @@
 # modified from http://sourceforge.net/apps/mediawiki/samtools/index.php?title=SAM_protocol#Python_APIs_.28Pysam.29
 import os, sys, re, optparse
+
 import pysam
 
-def main( argv = None ):
-    if not argv: argv = sys.argv
+from rSeq.utils.convert import bam2bed
 
+       
+
+if __name__ == "__main__":
     # setup command line parser
-    usage = "python %prog inFile.bam > outFile.bed"
-    parser = optparse.OptionParser( version = "%prog version: $Id$", 
-                                    usage = usage )
-    parser.add_option("-r", "--region", dest="region", type="string",
-                      help="samtools region string [default=%default]."  )
-    parser.set_defaults( region = None, )
-    (options, args) = parser.parse_args( argv[1:] )
+    epilog = """DESCRIPTION: Opens each inFile.bam with pysam to access its contents then converts each read's info to bed format and appends to OUT_FILE."""
+    usage = "python %prog [options] inFile1.bam [inFile2.bam ..]"
+    parser = optparse.OptionParser(usage=usage, epilog=epilog)
+    parser.add_option("-r", dest="region", type="string", default=None,
+                      help="samtools region string [default=%default].")
+    parser.add_option("-o", dest="out_file", type="string", default=None,
+                      help="Path to outFile.bed.  If None: uses sys.stdout. [default=%default].")
+
+    (opts, args) = parser.parse_args()
     if len(args) != 1:
         parser.print_help()
         exit(0)
-
-    # open BAM and get the iterator
-    samfile = pysam.Samfile( args[0], "rb" )
-    if options.region != None:
-        it = samfile.fetch( region=options.region )
+    if opts.out_file == None:
+        opts.out_file = sys.stdout
     else:
-        it = samfile.fetch()
-
-    # calculate the end position and print out BED
-    take = (0, 2, 3) # CIGAR operation (M/match, D/del, N/ref_skip)
-    outfile = sys.stdout
-    for read in it:
-        if read.is_unmapped: continue
-        # compute total length on reference
-        t = sum([ l for op,l in read.cigar if op in take ])
-        if read.is_reverse: strand = "-"
-        else: strand = "+"
-        outfile.write("%s\t%d\t%d\t%s\t%d\t%c\n" %\
-                          ( samfile.getrname( read.rname ),
-                            read.pos, read.pos+t, read.qname,
-                            read.mapq, strand) )            
-
-if __name__ == "__main__":
-    sys.exit( main( sys.argv) )
+        opts.out_file = open(opts.out_file,'a')
+    
+    # lets do this:
+    for bamPath in args:
+        bam2bed(bamPath = bamPath,
+                bedFile = opts.out_file,
+                region  = opts.region)
