@@ -1,8 +1,6 @@
 # modified from http://sourceforge.net/apps/mediawiki/samtools/index.php?title=SAM_protocol#Python_APIs_.28Pysam.29
 import os, sys, re, optparse
 
-import pysam
-
 from rSeq.utils.convert import bam2bed
 
        
