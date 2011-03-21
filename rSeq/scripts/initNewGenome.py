@@ -52,8 +52,44 @@ def blast_formatdb():
 def build_esa():
     """"""
 
-def init_sqlDB():
-    """"""
+def init_ensembl_sqlDB(sqlPath,user,password,host='localhost'):
+    """Given the path to a directory containing an ensembl db
+    dump, this will use MySQLdb to create a new database
+    using the 'species_version.sql' file in the directory
+    and populate it with the tables and info."""
+    import os
+    import MySQLdb as sql
+    
+    # unzip the sql and table files
+    sqlFiles = os.listdir(sqlPath)
+    for i in range(len(sqlFiles)):
+        sqlFiles[i] = '%s/%s' % (sqlPath.rstrip('/'),sqlFiles[i])
+    for f in sqlFiles:
+        if f.endswith('.gz'):
+            gResult = runExternalApp('gunzip',f)
+        elif f.endswith('.zip'):
+            zResult = runExternalApp('unzip',f)
+        else:
+            pass
+    
+    # Get the *.sql file path
+    for f in sqlFiles:
+        if f.endswith('.sql'):
+            schemaFile = f
+    try:
+        type(schemaFile)
+    except NameError:
+        UnexpectedValueError("ERROR: xxxxxxxxxx")
+    
+    dbName = schemaFile.split('/')[-1][:-4]
+    db = sql.connect(user=user,passwd=password,host=host) 
+    c  = db.cursor() 
+    c.execute('DROP DATABASE IF EXISTS %s' % (dbName))
+    c.execute('CREATE DATABASE %s' % (dbName))
+    sqlArgs = '-u %s -p %s %s < %s' % (user,password,dbName,schemaFile)
+    sqlResult = runExternalApp('mysql',sqlArgs)
+    impArgs = '-u %s -p %s --fields_escaped_by=\\ %s -L *.txt' % (user,password,dbName)
+    importResult = runExternalApp('mysqlimport',impArgs)
 
 
 if __name__ == "__main__":
@@ -97,5 +133,5 @@ if __name__ == "__main__":
     if not opts.override:
         opts.bt_opts = "%s %s" % (defaultBtOpts,opts.bt_opts)
     
-
+    init_ensembl_sqlDB(sqlPath=,user,password,host='localhost')
     
