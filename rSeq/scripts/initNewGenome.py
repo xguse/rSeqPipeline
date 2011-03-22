@@ -112,26 +112,29 @@ if __name__ == "__main__":
     
     (opts, args) = parser.parse_args()
     
-    if len(sys.argv) == 1:
-        parser.print_help()
-        exit(0)
-    if opts.out_dir:
-        mkdirp(opts.out_dir)
-        opts.out_dir = opts.out_dir.rstrip('/')
-    else:
-        opts.out_dir = os.getcwd()
-    if opts.cent_log:
-        start_sitrep(opts.out_dir)
-    if not 'BOWTIE_INDEXES' in os.environ:
-        raise Exception('ERROR: please set the BOWTIE_INDEXES environment variable!')
-    try:
-        opts.bt_index
-        opts.bam_base
-        opts.fastqs
-    except KeyError:
-        raise MissingArgumentError('missing at least one of the required command line arguments: --bt-index, --bam-base, --fastqs')        
-    if not opts.override:
-        opts.bt_opts = "%s %s" % (defaultBtOpts,opts.bt_opts)
+    #if len(sys.argv) == 1:
+        #parser.print_help()
+        #exit(0)
+    #if opts.out_dir:
+        #mkdirp(opts.out_dir)
+        #opts.out_dir = opts.out_dir.rstrip('/')
+    #else:
+        #opts.out_dir = os.getcwd()
+    #if opts.cent_log:
+        #start_sitrep(opts.out_dir)
+    #if not 'BOWTIE_INDEXES' in os.environ:
+        #raise Exception('ERROR: please set the BOWTIE_INDEXES environment variable!')
+    #try:
+        #opts.bt_index
+        #opts.bam_base
+        #opts.fastqs
+    #except KeyError:
+        #raise MissingArgumentError('missing at least one of the required command line arguments: --bt-index, --bam-base, --fastqs')        
+    #if not opts.override:
+        #opts.bt_opts = "%s %s" % (defaultBtOpts,opts.bt_opts)
     
-    init_ensembl_sqlDB(sqlPath=,user,password,host='localhost')
+    init_ensembl_sqlDB(sqlPath='/home/data/genomes/aedes_aegypti/current/mysql',
+                       user='bioinfo',
+                       password='Anophelesaegypti',
+                       host='localhost')
     
