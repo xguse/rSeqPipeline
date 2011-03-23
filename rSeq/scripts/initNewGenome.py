@@ -52,15 +52,15 @@ def blast_formatdb():
 def build_esa():
     """"""
 
-def init_ensembl_sqlDB(sqlPath,user,password,host='localhost',tmp=True):
+def init_ensembl_sqlDB(sqlPath,user,password,host='localhost',tmp=None):
     """Given the path to a directory containing an ensembl db
     dump, this will use MySQLdb to create a new database
     using the 'species_version.sql' file in the directory
     and populate it with the tables and info.
     
-    tmp = True: zipped files will be unziped to system specified temp dir.
-    tmp = False: unzipped in place
+    tmp = None: unzipped in place
     tmp = defined dir path: unzipped to that dir
+    
     tmp Files/Dirs will be deleted
     """
     import os
