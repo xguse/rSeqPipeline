@@ -1,4 +1,39 @@
 import sys
+import textwrap
+from optparse import IndentedHelpFormatter
+
+
+class RseqHelpFormatter(IndentedHelpFormatter):
+    """Custom help formatter for optparse that allows
+    me to break text into paragraphs!"""
+    
+    def __init__(self,
+                 indent_increment=0,
+                 max_help_position=80,
+                 width=None,
+                 short_first=1):
+        IndentedHelpFormatter.__init__(self,
+                                       indent_increment=indent_increment,
+                                       max_help_position=max_help_position,
+                                       width=width,
+                                       short_first=short_first)
+    def _format_text(self, text):
+        """
+        Format a paragraph of free-form text for inclusion in the
+        help output at the current indentation level while honoring
+        users' newlines!
+        """
+        text_width = self.width - self.current_indent
+        indent = " "*self.current_indent
+        return textwrap.fill(text,
+                             text_width,
+                             initial_indent='',
+                             subsequent_indent='\t',
+                             replace_whitespace=False,
+                             drop_whitespace=True,
+                             expand_tabs=True)
+    
+
 
 # From Titus Brown's gff parser:
 class Bag(dict):
