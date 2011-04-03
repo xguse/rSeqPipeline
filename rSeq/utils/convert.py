@@ -1,4 +1,4 @@
-import sys
+import sys, pdb
 
 import pysam
 
@@ -35,8 +35,10 @@ def bam2bed(bamPath,bedFile,region=None,ncpus="autodetect"):
 
     modified from http://sourceforge.net/apps/mediawiki/samtools/index.php?title=SAM_protocol#Python_APIs_.28Pysam.29
     """
+    pdb.set_trace()
     def convertBAM(bamPath,bedFile,region=None):
         # Check to see if the file is closed if so, open it for appending
+        #pdb.set_trace()
         if bedFile.closed:
             bedFile = open(bedFile.name,'a')
         # Report convertion files:
@@ -62,7 +64,7 @@ def bam2bed(bamPath,bedFile,region=None,ncpus="autodetect"):
                            read.pos, read.pos+t, read.qname,
                            read.mapq, strand))
             if outfile.name != "<stdout>":
-                pass
+                outfile.flush()
             else:
                 outfile.close()
            
@@ -111,15 +113,17 @@ def bam2bed(bamPath,bedFile,region=None,ncpus="autodetect"):
         print "Running with %s cpus." % (job_server.get_ncpus())
         jobs = []
         results = []
+	#pdb.set_trace()
         for i in range(len(bamPath)):
             jobs.append(job_server.submit(func=convertBAM,
-                                          args=(bamPath[i],bedFile[i],region[i]),
+                                          args=(bamPath[i],open(bedFile[i],'a'),region[i]),
                                           depfuncs=(),
                                           modules=('pysam',),
                                           callback=None,
                                           callbackargs=(),
                                           group='default',
                                           globals=None))
+	
         for i in range(len(bamPath)):
             results.append(jobs[i]())
 
