@@ -110,6 +110,7 @@ def bam2bed(bamPath,bedFile,region=None,ncpus="autodetect"):
         job_server = pp.Server(ncpus=ncpus)
         print "Running with %s cpus." % (job_server.get_ncpus())
         jobs = []
+        results = []
         for i in range(len(bamPath)):
             jobs.append(job_server.submit(func=convertBAM,
                                           args=(bamPath[i],bedFile[i],region[i]),
@@ -119,6 +120,10 @@ def bam2bed(bamPath,bedFile,region=None,ncpus="autodetect"):
                                           callbackargs=(),
                                           group='default',
                                           globals=None))
+        for i in range(len(bamPath)):
+            results.append(jobs[i]())
+        None
+
     except NameError as err:
         # if no pp: run sequencially
         if err[0] == "name 'pp' is not defined":
