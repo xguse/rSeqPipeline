@@ -71,7 +71,7 @@ def bam2bed(bamPath,bedFile,region=None,ncpus="autodetect"):
     # convert all that are allowed to be lists into lists
     if type(bamPath) == type(''):
         bamPath = [bamPath]
-    if type(bedFile) == "<type 'file'>":
+    if type(bedFile) == type(""):
         bedFile = [bedFile]
     if region:
         if region == type(''):
@@ -88,14 +88,14 @@ def bam2bed(bamPath,bedFile,region=None,ncpus="autodetect"):
     if (len(region) != 1) and (len(bamPath) != len(region)):
             raise ValueError('ERROR: If list is given for region, it must be of same length as bamPath andbamPaths[i] will use regions[i]. ')
     
-    # enforce type(bedFile) == "<type 'file'> if only one bedFile given
-    if (len(bedFile) != 1) and (len(bamPath) != len(bedFile)):
-        raise TypeError('ERROR: If list given for bamPath AND NOT bedFile, bedFile must be an open file obj. ')
+    ## enforce type(bedFile) == "<type 'file'> if only one bedFile given
+    #if (len(bedFile) != 1) and (len(bamPath) != len(bedFile)):
+        #raise TypeError('ERROR: If list given for bamPath AND NOT bedFile, bedFile must be an open file obj. ')
         
         
     # enforce type(bedFile) == type([]) if only one bamPath given
     if (len(bamPath) == 1) and (len(bedFile) > 1):
-        raise TypeError('ERROR: If single bamPath, bedFile must be a single open file obj. ')
+        raise TypeError('ERROR: If single bamPath, bedFile must be a single bed path. ')
     
         
     # equalize list lengths
@@ -122,7 +122,7 @@ def bam2bed(bamPath,bedFile,region=None,ncpus="autodetect"):
                                           globals=None))
         for i in range(len(bamPath)):
             results.append(jobs[i]())
-        None
+
 
     except NameError as err:
         # if no pp: run sequencially
