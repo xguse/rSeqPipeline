@@ -35,12 +35,11 @@ def bam2bed(bamPath,bedFile,region=None,ncpus="autodetect"):
 
     modified from http://sourceforge.net/apps/mediawiki/samtools/index.php?title=SAM_protocol#Python_APIs_.28Pysam.29
     """
-    pdb.set_trace()
+    #pdb.set_trace()
     def convertBAM(bamPath,bedFile,region=None):
         # Check to see if the file is closed if so, open it for appending
         #pdb.set_trace()
-        if bedFile.closed:
-            bedFile = open(bedFile.name,'a')
+        bedFile = open(bedFile,'a')
         # Report convertion files:
         print "Converting %s to %s..." % (bamPath,bedFile.name) 
         # open BAM and get the iterator
@@ -106,9 +105,9 @@ def bam2bed(bamPath,bedFile,region=None,ncpus="autodetect"):
     if len(region) == 1:
         region = region * len(bamPath)
 
-    # open files
-    for i in range(len(bamPath)):
-        bedFile[i] = open(bedFile[i],'a')
+    ## open files
+    #for i in range(len(bamPath)):
+    #    bedFile[i] = open(bedFile[i],'a')
         
     # # Initialize job_server if pp is avail and run jobs # #
     try:
@@ -122,7 +121,7 @@ def bam2bed(bamPath,bedFile,region=None,ncpus="autodetect"):
             jobs.append(job_server.submit(func=convertBAM,
                                           args=(bamPath[i],bedFile[i],region[i]),
                                           depfuncs=(),
-                                          modules=('pysam',),
+                                          modules=('pysam','pdb'),
                                           callback=None,
                                           callbackargs=(),
                                           group='default',
