@@ -853,7 +853,7 @@ SAM Header Options (for embedding sequencing run metadata in output):
     #    *  [FAILED]
     #    *  Error: bowtie-inspect returned an error.
     if not bowtie_index.startswith('/'):
-        bowtie_index = "$BOWTIE_INDEXES/%s" 
+        bowtie_index = "$BOWTIE_INDEXES/%s" % (bowtie_index)
         
     cmdArgs = "%s %s %s %s %s %s" % (options+runDir,bowtie_index,readsA,readsB,qualsA,qualsB)
 
