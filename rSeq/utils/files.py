@@ -3,7 +3,22 @@ import csv
 import collections
 from rSeq.utils.errors import *
 
-
+def unSoftMask(inFastaPath,outFastaPath):
+    """
+    UPPERcases any lowercased nucs in the fasta recs.
+    Writes new file.
+    """
+    inFasta  = open(inFastaPath, 'rU')
+    outFasta = open(outFastaPath, 'w')
+    for line in inFasta:
+        if line.startswith('>'):
+            outFasta.write(line)
+        else:
+            outFasta.write(line.upper())
+    inFasta.close()
+    outFasta.close()
+    
+    
 def tableFile2namedTuple(tablePath,sep='\t',headers=None):
     """Returns namedTuple from table file using first row fields as
     col headers or a list supplied by user."""
