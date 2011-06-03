@@ -1,9 +1,18 @@
 import sys
+import subprocess
+import pdb
+
 import pysam
+
 from rSeq.utils.errors import *
 from rSeq.utils.externals import runExternalApp,mkdirp
 from rSeq.utils.misc import whoami
 
+# import pp if avail
+try:
+    import pp
+except ImportError:
+    pass
 
 
 #def samCH2supCntg(samFile,outFile,cnvsnDict):
@@ -244,8 +253,154 @@ def exonerateCigar2BEDline(cigarLine,rgb="0,0,0"):
             thickStart,thickEnd,itemRgb,blockCount,blockSizes,blockStarts)
     
 
-
+############################
 ########## BOWTIE ##########
+############################
+
+def pipe_bowtie2bam(btIndex,outPath,fastq1,fastq2=None,options=None):
+    """Run bowtie and pipe output to samtools to convert to
+    BAM type.
+    
+    btIndex: valid bowtie index residing in $BOWTIE_INDEXES
+    outPath: path to write the output
+    fastq1: path(s) to upstream mates or single reads (if fastq2=None) ["p1,p2...pN"]
+    fastq2: path(s) to downstream mates ["p1,p2...pN"]
+    options: valid cmd line options string for bowtie 
+    
+    Exp of options (mimic ELAND and write as SAM):
+    options = "--solexa1.3-quals -v 2 -m 1 -S"
+    
+    ----------
+    bowtie help text:
+    
+    Usage: 
+    bowtie [options]* <ebwt> {-1 <m1> -2 <m2> | --12 <r> | <s>} [<hit>]
+  
+    <m1>    Comma-separated list of files containing upstream mates (or the
+            sequences themselves, if -c is set) paired with mates in <m2>
+    <m2>    Comma-separated list of files containing downstream mates (or the
+            sequences themselves if -c is set) paired with mates in <m1>
+    <r>     Comma-separated list of files containing Crossbow-style reads.  Can be
+            a mixture of paired and unpaired.  Specify "-" for stdin.
+    <s>     Comma-separated list of files containing unpaired reads, or the
+            sequences themselves, if -c is set.  Specify "-" for stdin.
+    <hit>   File to write hits to (default: stdout)
+    Input:
+      -q                 query input files are FASTQ .fq/.fastq (default)
+      -f                 query input files are (multi-)FASTA .fa/.mfa
+      -r                 query input files are raw one-sequence-per-line
+      -c                 query sequences given on cmd line (as <mates>, <singles>)
+      -C                 reads and index are in colorspace
+      -Q/--quals <file>  QV file(s) corresponding to CSFASTA inputs; use with -f -C
+      --Q1/--Q2 <file>   same as -Q, but for mate files 1 and 2 respectively
+      -s/--skip <int>    skip the first <int> reads/pairs in the input
+      -u/--qupto <int>   stop after first <int> reads/pairs (excl. skipped reads)
+      -5/--trim5 <int>   trim <int> bases from 5' (left) end of reads
+      -3/--trim3 <int>   trim <int> bases from 3' (right) end of reads
+      --phred33-quals    input quals are Phred+33 (default)
+      --phred64-quals    input quals are Phred+64 (same as --solexa1.3-quals)
+      --solexa-quals     input quals are from GA Pipeline ver. < 1.3
+      --solexa1.3-quals  input quals are from GA Pipeline ver. >= 1.3
+      --integer-quals    qualities are given as space-separated integers (not ASCII)
+    Alignment:
+      -v <int>           report end-to-end hits w/ <=v mismatches; ignore qualities
+        or
+      -n/--seedmms <int> max mismatches in seed (can be 0-3, default: -n 2)
+      -e/--maqerr <int>  max sum of mismatch quals across alignment for -n (def: 70)
+      -l/--seedlen <int> seed length for -n (default: 28)
+      --nomaqround       disable Maq-like quality rounding for -n (nearest 10 <= 30)
+      -I/--minins <int>  minimum insert size for paired-end alignment (default: 0)
+      -X/--maxins <int>  maximum insert size for paired-end alignment (default: 250)
+      --fr/--rf/--ff     -1, -2 mates align fw/rev, rev/fw, fw/fw (default: --fr)
+      --nofw/--norc      do not align to forward/reverse-complement reference strand
+      --maxbts <int>     max # backtracks for -n 2/3 (default: 125, 800 for --best)
+      --pairtries <int>  max # attempts to find mate for anchor hit (default: 100)
+      -y/--tryhard       try hard to find valid alignments, at the expense of speed
+      --chunkmbs <int>   max megabytes of RAM for best-first search frames (def: 64)
+    Reporting:
+      -k <int>           report up to <int> good alignments per read (default: 1)
+      -a/--all           report all alignments per read (much slower than low -k)
+      -m <int>           suppress all alignments if > <int> exist (def: no limit)
+      -M <int>           like -m, but reports 1 random hit (MAPQ=0); requires --best
+      --best             hits guaranteed best stratum; ties broken by quality
+      --strata           hits in sub-optimal strata aren't reported (requires --best)
+    Output:
+      -t/--time          print wall-clock time taken by search phases
+      -B/--offbase <int> leftmost ref offset = <int> in bowtie output (default: 0)
+      --quiet            print nothing but the alignments
+      --refout           write alignments to files refXXXXX.map, 1 map per reference
+      --refidx           refer to ref. seqs by 0-based index rather than name
+      --al <fname>       write aligned reads/pairs to file(s) <fname>
+      --un <fname>       write unaligned reads/pairs to file(s) <fname>
+      --max <fname>      write reads/pairs over -m limit to file(s) <fname>
+      --suppress <cols>  suppresses given columns (comma-delim'ed) in default output
+      --fullref          write entire ref name (default: only up to 1st space)
+    Colorspace:
+      --snpphred <int>   Phred penalty for SNP when decoding colorspace (def: 30)
+         or
+      --snpfrac <dec>    approx. fraction of SNP bases (e.g. 0.001); sets --snpphred
+      --col-cseq         print aligned colorspace seqs as colors, not decoded bases
+      --col-cqual        print original colorspace quals, not decoded quals
+      --col-keepends     keep nucleotides at extreme ends of decoded alignment
+    SAM:
+      -S/--sam           write hits in SAM format
+      --mapq <int>       default mapping quality (MAPQ) to print for SAM alignments
+      --sam-nohead       supppress header lines (starting with @) for SAM output
+      --sam-nosq         supppress @SQ header lines for SAM output
+      --sam-RG <text>    add <text> (usually "lab=value") to @RG line of SAM header
+    Performance:
+      -o/--offrate <int> override offrate of index; must be >= index's offrate
+      -p/--threads <int> number of alignment threads to launch (default: 1)
+      --mm               use memory-mapped I/O for index; many 'bowtie's can share
+      --shmem            use shared mem for index; many 'bowtie's can share
+    Other:
+      --seed <int>       seed for random number generator
+      --verbose          verbose output (for debugging)
+      --version          print version information and quit
+      -h/--help          print this usage message
+
+    """
+    Popen = subprocess.Popen
+    PIPE = subprocess.PIPE
+    
+    # example:
+    # bowtie --solexa1.3-quals -v 2 -m 1 -S $BINDX -p 2 --mm "${RBA},${RBB}" | samtools view -bS - > $RB_BAM
+    
+    # Prepare the command line args
+    options = options.split()
+    #pdb.set_trace()
+    if fastq2 == None:
+        btArgs = ['bowtie'] + options + [btIndex] + [fastq1]
+        samArgs = ['samtools','view','-bS','-']
+        print "running: \nbowtie with cmd: '%s'\nsamtools with cmd: '%s'\noutfile:%s" \
+              % (' '.join(btArgs),' '.join(samArgs),outPath)
+        
+        bowtieStep  = Popen(btArgs,
+                            stdout=PIPE)
+        
+        samViewStep = Popen(samArgs,
+                            stdin=bowtieStep.stdout,
+                            stdout=open(outPath,'w'))
+
+        bowtieStep.stdout.close()
+        samViewStep.stdout.close()
+    else:
+        btArgs = ['bowtie'] + options + [btIndex] + ['-1'] + [fastq1] + ['-2'] + [fastq2]
+        samArgs = ['samtools','view','-bS','-']
+        print "running: \nbowtie with cmd: '%s'\nsamtools with cmd: '%s'\noutfile:%s" \
+              % (' '.join(btArgs),' '.join(samArgs),outPath)
+        
+        bowtieStep  = Popen(args,
+                            stdout=PIPE)
+        
+        samViewStep = Popen(samArgs,
+                            stdin=bowtieStep.stdout,
+                            stdout=open(outPath,'w'))
+
+        bowtieStep.stdout.close()
+        samViewStep.stdout.close()
+        
+    
 
 def bowtie_index(reference_in,ebwt_outfile_base,runDir,options=None):
     """Create bowtie indexes from new fasta set.
@@ -420,8 +575,9 @@ def bowtie_align(ebwt,readsString,hit,runDir,options=None):
         
     return btResults
 
-
+##############################
 ########## SAMTOOLS ##########
+##############################
 
 def run_samtools(tool,argsList):
     """Core wrapper for calls to samtools and associated
@@ -543,3 +699,167 @@ def pysamtools_call(funcName,argsList):
         sys.stderr.write('[%s:%s] %s' % (whoami(),funcName,line))
     
     return results
+
+
+############################
+########## TOPHAT ##########
+############################
+
+def tophat_align(bowtie_index,readsA,readsB=None,qualsA=None,qualsB=None,options=None,runDir=None):
+    """
+    Wrapper for calling tophat and dealing with output.
+    
+    **ARGS**
+    _name_         _type_      _desc_
+    bowtie_index : String      bowtie index base-name in $BOWTIE_INDEXES
+    readsA       : List        List of FilePaths to fastQ files
+    readsB       : List/None   
+    qualsA       : List/None
+    qualsB       : List/None
+    options      : String      quoted comma-sep str of CLI tophat options
+    ------------------
+    
+    **NOTES**
+    If (readsA AND readsB) OR (qualsA AND qualsB), the order of filePaths
+    corresponding to PE-mates must match:
+        readsA,readsB = [readsA_1,readsA_2], [readsB_1,readsB_2]
+        qualsA,qualsB = [qualsA_1,qualsA_2], [qualsB_1,qualsB_2]
+    ------------------
+    
+    
+    **TOPHAT HELP TEXT FOLLOWS**
+tophat: 
+TopHat maps short sequences from spliced transcripts to whole genomes.
+
+Usage:
+    tophat [options] <bowtie_index> <reads1[,reads2,...,readsN]> [reads1[,reads2,...,readsN]] [quals1,[quals2,...,qualsN]] [quals1[,quals2,...,qualsN]]
+    
+Options:
+    -v/--version
+    -o/--output-dir                <string>    [ default: ./tophat_out ]
+    -a/--min-anchor                <int>       [ default: 8            ]
+    -m/--splice-mismatches         <0-2>       [ default: 0            ]
+    -i/--min-intron-length         <int>       [ default: 50           ]
+    -I/--max-intron-length         <int>       [ default: 500000       ]
+    -g/--max-multihits             <int>       [ default: 40           ]
+    -F/--min-isoform-fraction      <float>     [ default: 0.15         ]
+    --max-insertion-length         <int>       [ default: 3            ]
+    --max-deletion-length          <int>       [ default: 3            ]
+    --solexa-quals                          
+    --solexa1.3-quals                          (same as phred64-quals)
+    --phred64-quals                            (same as solexa1.3-quals)
+    -Q/--quals
+    --integer-quals
+    -C/--color                                 (Solid - color space)
+    --color-out
+    --library-type                             (--fr-unstranded, --fr-firststrand, --fr-secondstrand, --ff-unstranded, --ff-firststrand, --ff-secondstrand)
+    -p/--num-threads               <int>       [ default: 1            ]
+    -G/--GTF                       <filename>
+    -j/--raw-juncs                 <filename>
+    --insertions		   <filename>
+    --deletions			   <filename>
+    -r/--mate-inner-dist           <int>       
+    --mate-std-dev                 <int>       [ default: 20           ]
+    --no-novel-juncs
+    --allow-indels
+    --no-novel-indels                           
+    --no-gtf-juncs                             
+    --no-coverage-search
+    --coverage-search                                              
+    --no-closure-search
+    --closure-search
+    --fill-gaps        
+    --microexon-search
+    --butterfly-search
+    --no-butterfly-search
+    --keep-tmp
+    --tmp-dir                      <dirname>
+    
+Advanced Options:
+
+    --segment-mismatches           <int>       [ default: 2            ]
+    --segment-length               <int>       [ default: 25           ]
+    --min-closure-exon             <int>       [ default: 100          ]
+    --min-closure-intron           <int>       [ default: 50           ]
+    --max-closure-intron           <int>       [ default: 5000         ]
+    --min-coverage-intron          <int>       [ default: 50           ]
+    --max-coverage-intron          <int>       [ default: 20000        ]
+    --min-segment-intron           <int>       [ default: 50           ]
+    --max-segment-intron           <int>       [ default: 500000       ] 
+
+SAM Header Options (for embedding sequencing run metadata in output):
+    --rg-id                        <string>    (read group ID)
+    --rg-sample                    <string>    (sample ID)
+    --rg-library                   <string>    (library ID)
+    --rg-description               <string>    (descriptive string, no tabs allowed)
+    --rg-platform-unit             <string>    (e.g Illumina lane ID)
+    --rg-center                    <string>    (sequencing center name)
+    --rg-date                      <string>    (ISO 8601 date of the sequencing run)
+    --rg-platform                  <string>    (Sequencing platform descriptor)  
+
+    for detailed help see http://tophat.cbcb.umd.edu/manual.html
+
+    """
+    # TODO: eliminate "Reconstituting reference FASTA file from Bowtie index \ [FAILED] \ Error: bowtie-inspect returned an error."
+    
+    # make runDir if it does not yet exist
+    #   => tophat takes care of this for us
+    ##mkdirp(runDir)
+    
+    # Construct cmdArgs
+    if not type(readsA) == type([]):
+        raise TypeError('readsA type should be "[]".')
+    readsA = ','.join(readsA)
+    
+    # format readsB
+    if readsB:
+        if not type(readsB) == type([]):
+            raise TypeError('readsB type should be "[]".')
+        readsB = ','.join(readsB)
+    else:
+        readsB = ''
+    
+    # format qualsA    
+    if qualsA:
+        if not type(qualsA) == type([]):
+            raise TypeError('qualsA type should be "[]".')
+        qualsA = ','.join(qualsA)
+    else:
+        qualsA = ''
+    
+    # format qualsB
+    if qualsB:
+        if not type(qualsB) == type([]):
+            raise TypeError('qualsB type should be "[]".')
+        qualsB = ','.join(qualsB)
+    else:
+        qualsB = ''
+    
+    # format runDir
+    if runDir:
+        runDir = ' -o %s' % (runDir)
+    else:
+        runDir = ''
+    
+    # format cmdArgs
+    if options == None:
+        options = ''
+    
+    cmdArgs = "%s %s %s %s %s %s" % (options+runDir,bowtie_index,readsA,readsB,qualsA,qualsB)
+
+        
+    # Run and capture output
+    print "Setting up tophat call with the following cmd:\n\t\ttophat %s" % (cmdArgs)
+    thResults = runExternalApp('tophat',cmdArgs)
+    
+    # Report stdout and stderr
+    if thResults[0]:
+        for line in thResults[0].split('\n'):
+            print('[%s] %s' % (whoami(),line))
+        
+    if thResults[1]:
+        for line in thResults[1].split('\n'):
+            sys.stderr.write('[%s] %s' % (whoami(),line))
+        
+    return thResults
+
