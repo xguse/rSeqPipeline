@@ -706,6 +706,8 @@ def pysamtools_call(funcName,argsList):
 ############################
 
 def tophat_align(bowtie_index,readsA,readsB=None,qualsA=None,qualsB=None,options=None,runDir=None):
+    # TODO: eliminate "Reconstituting reference FASTA file from Bowtie index \ [FAILED] \ Error: bowtie-inspect returned an error."
+
     """
     Wrapper for calling tophat and dealing with output.
     
@@ -800,7 +802,6 @@ SAM Header Options (for embedding sequencing run metadata in output):
     for detailed help see http://tophat.cbcb.umd.edu/manual.html
 
     """
-    # TODO: eliminate "Reconstituting reference FASTA file from Bowtie index \ [FAILED] \ Error: bowtie-inspect returned an error."
     
     # make runDir if it does not yet exist
     #   => tophat takes care of this for us
@@ -844,7 +845,16 @@ SAM Header Options (for embedding sequencing run metadata in output):
     # format cmdArgs
     if options == None:
         options = ''
-    
+        
+    # format bowtie_index
+    #   This seems needed or tophat cant reconstitute the fasta files for some reason
+    #   and returns the following error:
+    #    *  Reconstituting reference FASTA file from Bowtie index
+    #    *  [FAILED]
+    #    *  Error: bowtie-inspect returned an error.
+    if not bowtie_index.startswith('/'):
+        bowtie_index = "$BOWTIE_INDEXES/%s" 
+        
     cmdArgs = "%s %s %s %s %s %s" % (options+runDir,bowtie_index,readsA,readsB,qualsA,qualsB)
 
         
