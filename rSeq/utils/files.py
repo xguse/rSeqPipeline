@@ -4,6 +4,7 @@ import collections
 from rSeq.utils.errors import *
 
 def unSoftMask(inFastaPath,outFastaPath):
+    # TODO: replace unSoftMask() with mask_converter() that provides multiple options for changing the masking of sequences
     """
     UPPERcases any lowercased nucs in the fasta recs.
     Writes new file.
