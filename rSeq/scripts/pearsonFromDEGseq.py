@@ -3,7 +3,7 @@ import optparse
 import csv
 import scipy.stats as stats
 import matplotlib as mpl
-mpl.use('TkAgg')
+#mpl.use('TkAgg')
 from matplotlib import pylab as pl
 from rSeq.utils.errors import *
 from rSeq.utils.externals import mkdirp
