@@ -19,7 +19,7 @@ def main():
     -- pdf plot of normalized A reads vs B reads and the Pearson stats."""
     
     desc  = """This script creates a scatterplot of normalized transcript
-read-counts from column 2 on the x-axis and column 3 on the right axis and reports the Pearson Correlation.  
+read-counts from column 2 on the x-axis and column 3 on the y-axis and reports the Pearson Correlation.  
 It uses bedFileA and bedFileB to determine the correct normalization factor.  
 It writes a pdf file of the plot to the supplied output directory.
 bedFileA is bedfile whose data is in DEGseqFile column 2.
@@ -60,7 +60,7 @@ bedFileB is bedfile whose data is in DEGseqFile column 3."""
         parser.print_help()
         print "\n\n** ERROR: Please supply exactly one of each: degSeqFile, bedFileA, bedFileB. **"
         exit(1)
-    if not ((len(args) >= 1) and (opts.norm)):
+    if not ((len(args) >= 1) and (opts.norm == False)):
         parser.print_help()
         print "\n\n** ERROR: Please supply degSeqFile. **"
         exit(1)
@@ -167,7 +167,10 @@ def plotScatter(pearsonStats,normedTxCntsList,opts):
             transform = ax.transAxes)
     
     mkdirp(opts.dir)
-    pl.savefig('%s%s_vs_%s.png' % (opts.dir,opts.name_a,opts.name_b))
+    if not opts.log:
+        pl.savefig('%s%s_vs_%s.png' % (opts.dir,opts.name_a,opts.name_b))
+    else:
+        pl.savefig('%s%s_vs_%s.log.png' % (opts.dir,opts.name_a,opts.name_b))
     print 'Show?  %s' % (opts.show)
     if opts.show:
         pl.show()
