@@ -6,6 +6,33 @@ import collections
 from rSeq.utils.errors import *
 from rSeq.utils.misc import Bag
 
+#def strip_str_of_comments(string,commentStr='#'):
+    #"""
+    #Take string and return everything to the right of the first
+    #comment string found, unless it is quoted or escaped: '#' or "#" or \#.
+    #"""
+    #qComStr = """'%s'""" % (commentStr)
+    #qqComStr = '''"%s"''' % (commentStr)
+    #esqComStr = '\%s' % (commentStr)
+    #if """'%s'""" % (commentStr) in string:
+        
+    #return string.rstrip('/n').split(commentStr)[0]
+
+    
+def open_wo_comments(filePath,commentStr):
+    """
+    Return a generator that acts like fileObj.next() but removes
+    both commented lines and in-line comments. 
+    
+    Preserves line numbers.
+    """
+    inFile = open(filePath,'rU')
+    for line in inFile:
+        line = strip_str_of_comments(line)
+        yield '%s\n' % (line) # replace \n to preserve the behavior of fileObj.next()
+
+
+
 def unSoftMask(inFastaPath,outFastaPath):
     # TODO: replace unSoftMask() with mask_converter() that provides multiple options for changing the masking of sequences
     """
