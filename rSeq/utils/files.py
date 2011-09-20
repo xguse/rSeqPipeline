@@ -54,11 +54,11 @@ def tableFile2namedTuple(tablePath,sep='\t',headers=None):
     """Returns namedTuple from table file using first row fields as
     col headers or a list supplied by user."""
 
-    reader  = csv.reader(open(tablePath), delimiter=sep)
+    reader  = csv.reader(open(tablePath,'rU'), delimiter=sep)
     if not headers:
         headers = reader.next()   
-    Table   = collections.namedtuple('Table', ', '.join(headers))
-    data    = map(Table._make, reader)
+    Table   = collections.namedtuple('Table', headers)
+    data    = [Table._make(x) for x in reader if x!=[]] # reader kept feeding an empty list at the end that botched everything!  wtf?!
     return data
 
 class ParseFastA(object):
