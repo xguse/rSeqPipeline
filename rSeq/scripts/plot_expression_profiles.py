@@ -57,9 +57,11 @@ def main():
                   help="""Manually set marker color (html codes or names are legal) (default=%default)""")
     parser.add_option('--no-show', dest="no_show",action="store_true", default=False,
                       help="""Suppress figure displays. (default=%default)""")
+    parser.add_option('--galaxy', dest="galaxy",action="store_true", default=False,
+                      help="""Use symplified namings suitable for use with Galaxy tool template. (default: %default)""")
     
     (opts, args) = parser.parse_args()
-    
+    print opts
     if len(sys.argv) == 1:
         parser.print_help()
         exit(1)
@@ -146,7 +148,11 @@ def main():
 
         
         setTickSizes(axObj=ax,fontSize=16)
-        pl.savefig('%s.%s.expPlot.pdf' % (opts.prefix,gene.__getattribute__(opts.names_col)))
+        if not opts.galaxy:
+            pl.savefig('%s.%s.expPlot.pdf' % (opts.prefix,gene.__getattribute__(opts.names_col)))
+        else:
+            print "Plot of %s." % (gene.__getattribute__(opts.names_col))
+            pl.savefig(opts.prefix)
         if not opts.no_show:
             pl.show()
         del(fig,ax)
