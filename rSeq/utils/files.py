@@ -80,7 +80,10 @@ def filter_PEfastQs(filterFunc,fwdMatePath,revMatePath,matchedPassPath1,matchedP
         if revMate == None:
             keepRev = None
         else:
-            keepRev = filterFunc(fwdMate)
+            keepRev = filterFunc(revMate)
+            
+        #print "fwdMate %s\nkeepFwd %s\nrevMate %s\nkeepRev %s" % (fwdMate[0],keepFwd,revMate[0],keepRev)
+        #break
             
         # write fwd and rev to appropriate files and += respective counts
         if keepFwd and keepRev:
