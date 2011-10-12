@@ -106,6 +106,9 @@ def filter_PEfastQs(filterFunc,fwdMatePath,revMatePath,matchedPassPath1,matchedP
             counts.fwd_failed += 1
             counts.rev_failed += 1
     
+    for f in outFiles:
+        f.close()
+        
     sanityCount = (counts.pairs_passed * 2) + counts.fwd_passed_as_single + counts.rev_passed_as_single + counts.fwd_failed + counts.rev_failed
     if not sanityCount == counts.total:
         sys.stderr.write("WARNING: sanityCount (%s) does not equal counts.total (%s)\n" % (sanityCount, counts.total))
