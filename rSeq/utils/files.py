@@ -6,6 +6,113 @@ import collections
 from rSeq.utils.errors import *
 from rSeq.utils.misc import Bag
 
+
+def filter_PEfastQs(filterFunc,fwdMatePath,revMatePath,matchedPassPath1,matchedPassPath2,singlePassPath,nonPassPath):
+    """
+    Takes the paths to mated PE fastq files with coordinated read-ordering.
+    Tests whether paired reads satisfy the provided filterFunc.
+    For example fastQs from hudsonAlpha should have either "Y" or "N" flag in their header:
+    
+    @HWI-ST619:70:B0BMTABXX:3:1102:9652:78621 1:N:0:TAGCTT
+    GAATGCGATAGTCACAAGGCATGCCGTTGAATATTCGCAACTGAGCTTCG
+    +
+    @@@?DAD;DADAD:EGAGH=CFEEHB?GIEBFBGI@CFGD@FG>>@GGGH
+    
+    The fastQ parsers represent each read as a 4 member list with each line's data as an index.
+
+    
+    The filterlambda for this case might be:
+    filterFunc = lambda x: x[0].split(' ')[-1].split(':')[1] == "N"
+    
+    If both mates satisfy the filter, the fwd mate is written to matchedPassPath1 and rev mate to matchedPassPath2.
+    If only one mate satisfies the filter, it is written to singlePassPath regardles of fwd/rev.
+    All reads that do not satisfy the filter are written to nonPassPath.
+    
+    Notes:
+    * The filterFunc does not have to be a simple lambda, but even something like "testMeanQualScore()",
+      as long as it returns a True/False with True meaning that the read should be KEPT.
+    * Write-files are overwritten if they exist, created otherwise.
+    """
+    
+    fwdMates = ParseFastQ(fwdMatePath)
+    revMates = ParseFastQ(revMatePath)
+    mPassF_file = open(matchedPassPath1, 'w')
+    mPassR_file = open(matchedPassPath2, 'w')
+    sPass_file  = open(singlePassPath, 'w')
+    nPass_file  = open(nonPassPath, 'w')
+    
+    outFiles = [mPassF_file,
+                mPassR_file,
+                sPass_file,
+                nPass_file]
+    
+    counts = Bag({'pairs_passed':0,
+                  'fwd_passed_as_single':0,
+                  'rev_passed_as_single':0,
+                  'fwd_failed':0,
+                  'rev_failed':0,
+                  'total':0})
+    
+    while 1:
+        # get next fastq Records or set mates to None
+        try:
+            fwdMate = fwdMates.next()
+            counts.total += 1
+        except StopIteration:
+            fwdMate = None
+        
+        try:
+            revMate = revMates.next()
+            counts.total += 1
+        except StopIteration:
+            revMate = None
+        
+        # break out if both files are empty 
+        if (fwdMate == None) and (revMate == None):
+            break
+
+        # set up logical switches to guide the outWriting/counting
+        if fwdMate == None:
+            keepFwd = None
+        else:
+            keepFwd = filterFunc(fwdMate)
+        if revMate == None:
+            keepRev = None
+        else:
+            keepRev = filterFunc(fwdMate)
+            
+        # write fwd and rev to appropriate files and += respective counts
+        if keepFwd and keepRev:
+            mPassF_file.write('%s\n' % ('\n'.join(fwdMate)))
+            mPassR_file.write('%s\n' % ('\n'.join(revMate)))
+            counts.pairs_passed += 1
+        if keepFwd and not keepRev:
+            sPass_file.write('%s\n' % ('\n'.join(fwdMate)))
+            nPass_file.write('%s\n' % ('\n'.join(revMate)))
+            counts.fwd_passed_as_single += 1
+            counts.rev_failed += 1
+        if not keepFwd and keepRev:
+            nPass_file.write('%s\n' % ('\n'.join(fwdMate)))
+            sPass_file.write('%s\n' % ('\n'.join(revMate)))
+            counts.fwd_failed += 1
+            counts.rev_passed_as_single += 1
+        if not keepFwd and not keepRev:
+            nPass_file.write('%s\n' % ('\n'.join(fwdMate)))
+            nPass_file.write('%s\n' % ('\n'.join(revMate)))
+            counts.fwd_failed += 1
+            counts.rev_failed += 1
+    
+    sanityCount = (counts.pairs_passed * 2) + counts.fwd_passed_as_single + counts.rev_passed_as_single + counts.fwd_failed + counts.rev_failed
+    if not sanityCount == counts.total:
+        sys.stderr.write("WARNING: sanityCount (%s) does not equal counts.total (%s)\n" % (sanityCount, counts.total))
+    sys.stderr.write("PairsPassed:\t\t%s\nFwdSinglePassed:\t%s\nRevSinglePassed:\t%s\nFwdFailed:\t\t%s\nRevFailed:\t\t%s\n" %
+                     (counts.pairs_passed,
+                      counts.fwd_passed_as_single,
+                      counts.rev_passed_as_single,
+                      counts.fwd_failed,
+                      counts.rev_failed))
+    
+
 #def strip_str_of_comments(string,commentStr='#'):
     #"""
     #Take string and return everything to the right of the first
@@ -210,9 +317,9 @@ class ParseFastQ(object):
         except StopIteration:
             return None
         
-    def filter_fastQ_headings(self,filteredPath,key=None):
+    def filter_SEfastQ_headings(self,filteredPath,key=None):
         """
-        Iterates through a fastQ file and writes only those recs
+        Iterates through a single-end fastQ file and writes only those recs
         that satisfy the <key> lambda func to <filteredPath>.
         """
         fastqLen = 0
