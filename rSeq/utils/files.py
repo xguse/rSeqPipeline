@@ -2,6 +2,7 @@ import os
 import sys
 import csv
 import collections
+import gzip
 
 from rSeq.utils.errors import *
 from rSeq.utils.misc import Bag
@@ -268,7 +269,10 @@ class ParseFastQ(object):
 
         rec is tuple: (seqHeader,seqStr,qualHeader,qualStr)
         """
-        self._file = open(filePath, 'rU')
+        if filePath.endswith('.gz'):
+            self._file = gzip.open(filePath)
+        else:
+            self._file = open(filePath, 'rU')
         self._currentLineNumber = 0
         self._hdSyms = headerSymbols
         
