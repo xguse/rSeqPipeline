@@ -5,6 +5,7 @@ import multiprocessing as mp
 
 from rSeq.utils.errors import *
 from rSeq.utils.files import filter_PEfastQs
+from rSeq.utils.externals import mkdirp
 
 def main():
     """Inputs:
@@ -22,6 +23,8 @@ def main():
                         help="""Path to input table file.""")
     parser.add_argument('filter_func', type=str,
                         help="""lambda filter function (quoted string).""")
+    parser.add_argument('out_dir', type=str,
+                        help="""Path to out directory.""")
 
 
 
@@ -40,6 +43,8 @@ def main():
         if len(i) != 3:
             raise InvalidFileFormatError("At least one line in %s does not have exactly three columns:\n%s\n" % (args.input_table,i))
     
+    # create out_dir if needed
+    mkdirp(args.out_dir)
     
     # set up and unleash the subprocesses
     filtFunc = eval(args.filter_func,{"__builtins__":None})
@@ -47,10 +52,10 @@ def main():
     for i in inputs:
         arguments = [filtFunc, i[0], i[1]]
         # build the output file names (matchedPassPath1,matchedPassPath2,singlePassPath,nonPassPath) from baseNames 
-        arguments.append("%s.filtered.mated.fastq" % (i[0].replace('.fastq','')))   # matchedPassPath1
-        arguments.append("%s.filtered.mated.fastq" % (i[1].replace('.fastq','')))   # matchedPassPath2
-        arguments.append("%s.filtered.singled.fastq" % (i[2].replace('.fastq',''))) # singlePassPath
-        arguments.append("%s.filtered.failed.fastq" % (i[2].replace('.fastq','')))  # nonPassPath
+        arguments.append("%s/%s.filtered.mated.fastq"   % (args.out_dir.rstrip('/'),i[0].split('/')[-1].replace('.fastq','')))   # matchedPassPath1
+        arguments.append("%s/%s.filtered.mated.fastq"   % (args.out_dir.rstrip('/'),i[1].split('/')[-1].replace('.fastq','')))   # matchedPassPath2
+        arguments.append("%s/%s.filtered.singled.fastq" % (args.out_dir.rstrip('/'),i[2].split('/')[-1].replace('.fastq',''))) # singlePassPath
+        arguments.append("%s/%s.filtered.failed.fastq"  % (args.out_dir.rstrip('/'),i[2].split('/')[-1].replace('.fastq','')))  # nonPassPath
         
         p = mp.Process(target=filter_PEfastQs,args=tuple(arguments))
         jobs.append(p)
