@@ -56,10 +56,7 @@ def main():
         jobs.append(p)
         p.start()
     
-    # check to ensure that none of the subprocesses returned a non-zero exit status
-    for j in jobs:
-        if j.exitcode != 0:
-            raise Exception("Job %s returned a non-zero exit status: %s" % (j.name,j.exitcode))
+    return jobs
     
     
     
@@ -67,4 +64,11 @@ def main():
 
         
 if __name__ == "__main__":
-    main()
+    jobs = main()
+    # Require that all jobs be completed before going on
+    for j in jobs:
+        j.join()
+    # check to ensure that none of the subprocesses returned a non-zero exit status
+    for j in jobs:
+        if j.exitcode != 0:
+            raise Exception("Job %s returned a non-zero exit status: %s" % (j.name,j.exitcode))
