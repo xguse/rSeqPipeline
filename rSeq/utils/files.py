@@ -22,8 +22,8 @@ def filter_PEfastQs(filterFunc,fwdMatePath,revMatePath,matchedPassPath1,matchedP
     The fastQ parsers represent each read as a 4 member list with each line's data as an index.
 
     
-    The filterlambda for this case might be:
-    filterFunc = lambda x: x[0].split(' ')[-1].split(':')[1] == "N"
+    The filterFunc for this case might be:
+    lambda x: x[0].split(' ')[-1].split(':')[1] == "N"
     
     If both mates satisfy the filter, the fwd mate is written to matchedPassPath1 and rev mate to matchedPassPath2.
     If only one mate satisfies the filter, it is written to singlePassPath regardles of fwd/rev.
@@ -34,6 +34,14 @@ def filter_PEfastQs(filterFunc,fwdMatePath,revMatePath,matchedPassPath1,matchedP
       as long as it returns a True/False with True meaning that the read should be KEPT.
     * Write-files are overwritten if they exist, created otherwise.
     """
+    sys.stderr.write('''================
+Preparing to filter your files using the supplied filter function:
+fwdMatePath:\t\t%s
+revMatePath:\t\t%s
+matchedPassPath1:\t%s
+matchedPassPath2:\t%s
+singlePassPath:\t\t%s
+nonPassPath:\t\t%s\n----\n''' % (fwdMatePath,revMatePath,matchedPassPath1,matchedPassPath2,singlePassPath,nonPassPath))
     
     fwdMates = ParseFastQ(fwdMatePath)
     revMates = ParseFastQ(revMatePath)
