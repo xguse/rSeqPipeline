@@ -34,14 +34,7 @@ def filter_PEfastQs(filterFunc,fwdMatePath,revMatePath,matchedPassPath1,matchedP
       as long as it returns a True/False with True meaning that the read should be KEPT.
     * Write-files are overwritten if they exist, created otherwise.
     """
-    sys.stderr.write('''================
-Preparing to filter your files using the supplied filter function:
-fwdMatePath:\t\t%s
-revMatePath:\t\t%s
-matchedPassPath1:\t%s
-matchedPassPath2:\t%s
-singlePassPath:\t\t%s
-nonPassPath:\t\t%s\n----\n''' % (fwdMatePath,revMatePath,matchedPassPath1,matchedPassPath2,singlePassPath,nonPassPath))
+    
     
     fwdMates = ParseFastQ(fwdMatePath)
     revMates = ParseFastQ(revMatePath)
@@ -116,16 +109,24 @@ nonPassPath:\t\t%s\n----\n''' % (fwdMatePath,revMatePath,matchedPassPath1,matche
     
     for f in outFiles:
         f.close()
-        
+    
+    reportTxt = '''================
+Filtered your files using the supplied filter function:
+fwdMatePath:\t\t%s
+revMatePath:\t\t%s
+matchedPassPath1:\t%s
+matchedPassPath2:\t%s
+singlePassPath:\t\t%s
+nonPassPath:\t\t%s\n----\n''' % (fwdMatePath,revMatePath,matchedPassPath1,matchedPassPath2,singlePassPath,nonPassPath)
     sanityCount = (counts.pairs_passed * 2) + counts.fwd_passed_as_single + counts.rev_passed_as_single + counts.fwd_failed + counts.rev_failed
     if not sanityCount == counts.total:
-        sys.stderr.write("WARNING: sanityCount (%s) does not equal counts.total (%s)\n" % (sanityCount, counts.total))
-    sys.stderr.write("PairsPassed:\t\t%s\nFwdSinglePassed:\t%s\nRevSinglePassed:\t%s\nFwdFailed:\t\t%s\nRevFailed:\t\t%s\n" %
-                     (counts.pairs_passed,
-                      counts.fwd_passed_as_single,
-                      counts.rev_passed_as_single,
-                      counts.fwd_failed,
-                      counts.rev_failed))
+        reportTxt += "WARNING: sanityCount (%s) does not equal counts.total (%s)\n" % (sanityCount, counts.total)
+    reportTxt += "PairsPassed:\t\t%s\nFwdSinglePassed:\t%s\nRevSinglePassed:\t%s\nFwdFailed:\t\t%s\nRevFailed:\t\t%s\n" % (counts.pairs_passed,
+                                                                                                                           counts.fwd_passed_as_single,
+                                                                                                                           counts.rev_passed_as_single,
+                                                                                                                           counts.fwd_failed,
+                                                                                                                           counts.rev_failed)
+    sys.stderr.write("%s\n" % (reportTxt))
     
 
 #def strip_str_of_comments(string,commentStr='#'):
