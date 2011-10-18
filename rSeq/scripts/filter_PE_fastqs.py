@@ -52,10 +52,10 @@ def main():
     for i in inputs:
         arguments = [filtFunc, i[0], i[1]]
         # build the output file names (matchedPassPath1,matchedPassPath2,singlePassPath,nonPassPath) from baseNames 
-        arguments.append("%s/%s.filtered.mated.fastq"   % (args.out_dir.rstrip('/'),i[0].split('/')[-1].replace('.fastq','')))   # matchedPassPath1
-        arguments.append("%s/%s.filtered.mated.fastq"   % (args.out_dir.rstrip('/'),i[1].split('/')[-1].replace('.fastq','')))   # matchedPassPath2
-        arguments.append("%s/%s.filtered.singled.fastq" % (args.out_dir.rstrip('/'),i[2].split('/')[-1].replace('.fastq',''))) # singlePassPath
-        arguments.append("%s/%s.filtered.failed.fastq"  % (args.out_dir.rstrip('/'),i[2].split('/')[-1].replace('.fastq','')))  # nonPassPath
+        arguments.append("%s/%s.filtered.mated.fastq"   % (args.out_dir.rstrip('/'),i[0].split('/')[-1].split('.fastq')[0]))  # matchedPassPath1
+        arguments.append("%s/%s.filtered.mated.fastq"   % (args.out_dir.rstrip('/'),i[1].split('/')[-1].split('.fastq')[0]))  # matchedPassPath2
+        arguments.append("%s/%s.filtered.singled.fastq" % (args.out_dir.rstrip('/'),i[2].split('/')[-1].split('.fastq')[0]))  # singlePassPath
+        arguments.append("%s/%s.filtered.failed.fastq"  % (args.out_dir.rstrip('/'),i[2].split('/')[-1].split('.fastq')[0]))  # nonPassPath
         
         p = mp.Process(target=filter_PEfastQs,args=tuple(arguments))
         jobs.append(p)
