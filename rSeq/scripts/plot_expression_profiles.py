@@ -12,6 +12,7 @@ Uses headers to determine which data to plot.
 """
 
 import sys
+import os
 import optparse
 
 import numpy as np
@@ -19,7 +20,7 @@ from matplotlib import rc
 from matplotlib import pylab as pl
 rc('text', usetex=True)
 
-
+from rSeq.utils.externals import mkdirp,runExternalApp
 from rSeq.utils.files import tableFile2namedTuple
 from rSeq.utils.misc import Bag
 from rSeq.utils.plotting import setTickSizes
@@ -33,6 +34,8 @@ def main():
                       help="""Quoted comma delim'd list of tx/gene symbols to plot. (default=%default)""")
     parser.add_option('--names-col',dest="names_col",type='string',default=False,
                       help="""Header name where tx/gene names live. (default=%default)""")
+    parser.add_option('--dir',dest="dir",type='string',default='.',
+                      help="""Directory to serve as the root of the gallery. (default=%default)""")
     parser.add_option('-p',dest="prefix",type='string',default=False,
                       help="""Save figs using file-name prefix provided. (default=inFile)""")
     parser.add_option('--conditions',dest="conditions",type="string", default=False,
@@ -58,13 +61,21 @@ def main():
     parser.add_option('--no-show', dest="no_show",action="store_true", default=False,
                       help="""Suppress figure displays. (default=%default)""")
     parser.add_option('--galaxy', dest="galaxy",action="store_true", default=False,
-                      help="""Use symplified namings suitable for use with Galaxy tool template. (default: %default)""")
+                      help="""Used to make suitable for use with Galaxy tool template. (default: %default)""")
+    figTypes = ['pdf','png']
+    parser.add_option('--type',dest="type",type='string',default='pdf',
+                      help="""Save figs as: """ + str(figTypes) + """. (default=%default)""")
     
     (opts, args) = parser.parse_args()
     print opts
     if len(sys.argv) == 1:
         parser.print_help()
         exit(1)
+    
+    
+    if not opts.type in figTypes:
+        raise ValueError(" Option --types must be one of %s, given: %s " % (figTypes,opts.type))
+    
     if len(args) != 1:
         parser.print_help()
         raise ValueError(" Please supply exactly one inFile. ")
@@ -102,6 +113,7 @@ def main():
         opts.xticks = opts.xticks.split(',')
     
     
+    
       
     # --- Parse inFile ---
     table = tableFile2namedTuple(tablePath=args[0],sep='\t',headers=None)
@@ -110,7 +122,13 @@ def main():
         if row.__getattribute__(opts.names_col) in opts.include:
             data.append(row)
             
-                
+    # --- Create out directory ---
+    if not opts.galaxy:
+        mkdirp(opts.dir)
+    else:
+        opts.dir = opts.prefix.rstrip('/').split('/')[-1]
+        mkdirp('%s' % (opts.dir))
+    
     # ------- Build Figs -------
     for gene in data:
         fig = pl.figure()
@@ -148,14 +166,18 @@ def main():
 
         
         setTickSizes(axObj=ax,fontSize=16)
-        if not opts.galaxy:
-            pl.savefig('%s.%s.expPlot.pdf' % (opts.prefix,gene.__getattribute__(opts.names_col)))
-        else:
-            print "Plot of %s." % (gene.__getattribute__(opts.names_col))
-            pl.savefig(opts.prefix)
+        pl.savefig('%s/%s.%s.expPlot.%s' % (opts.dir.rstrip('/'),opts.prefix,gene.__getattribute__(opts.names_col),opts.type))
+
         if not opts.no_show:
             pl.show()
         del(fig,ax)
+        
+    # ---- Build HTML Gallery ----
+    curResult = runExternalApp('curator','%s' % (opts.dir))
+    
+    # ---- Create a link file to the sortindex.html file ----
+    os.symlink('%s/sortindex.html' % (opts.dir),
+               '%s' % (opts.prefix))
 
         
 
