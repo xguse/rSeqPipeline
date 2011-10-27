@@ -121,7 +121,6 @@ def main():
         opts.xticks = opts.xticks.split(',')
     
     
-    
       
     # --- Parse inFile ---
     table = tableFile2namedTuple(tablePath=args[0],sep='\t',headers=None)
@@ -135,8 +134,10 @@ def main():
         mkdirp(opts.dir)
     else:
         opts.prefix = opts.prefix.rstrip('/').split('/')[-1]
-        opts.dir = opts.dir.rstrip('/') + '_files'
-        mkdirp('%s/' % (opts.dir))
+        #opts.dir = opts.dir.rstrip('/') + '_files'
+        #mkdirp('%s/' % (opts.dir))
+        print 'dir: %s' % (opts.dir)
+        print 'pre: %s' % (opts.prefix)
         
         
     
@@ -187,9 +188,10 @@ def main():
     curResult = runExternalApp('curator','%s' % (opts.dir))
     
     # ---- Create a link file to the sortindex.html file ----
-    lnSrc  = '%s/sortindex.html' % (opts.dir)
-    lnDest = '%s/%s' % ('/'.join(opts.dir.split('/')[:-1]),opts.prefix)
-    os.symlink(lnSrc,lnDest)
+    if not opts.galaxy:
+        lnSrc  = '%s/sortindex.html' % (opts.dir)
+        lnDest = '%s/%s' % ('/'.join(opts.dir.split('/')[:-1]),opts.prefix)
+        os.symlink(lnSrc,lnDest)
 
         
 
