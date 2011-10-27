@@ -97,6 +97,14 @@ def main():
     else:
         opts.conditions = opts.conditions.split(',')
     
+    # Option translation kluge here to deal with galaxy
+    if opts.sym_bounds == '':
+        opts.sym_bounds = False
+    if opts.hi_bounds == '':
+        opts.hi_bounds = False
+    if opts.lo_bounds == '':
+        opts.lo_bounds = False
+        
     if opts.sym_bounds != False:
         opts.sym_bounds = opts.sym_bounds.split(',')
     if ((opts.sym_bounds != False) and ((opts.hi_bounds != False) or (opts.lo_bounds != False))):
