@@ -14,10 +14,7 @@ def mkdirp(path):
     """
 
     if not os.path.isdir(path):
-        try:
-            os.makedirs(path)
-        except OSError:
-            pass
+        os.makedirs(path)
             
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
