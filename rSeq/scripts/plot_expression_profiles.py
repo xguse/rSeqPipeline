@@ -135,7 +135,7 @@ def main():
     else:
         opts.prefix = opts.prefix.rstrip('/').split('/')[-1]
         #opts.dir = opts.dir.rstrip('/') + '_files'
-        #mkdirp('%s/' % (opts.dir))
+        mkdirp('%s/' % (opts.dir))
         print 'dir: %s' % (opts.dir)
         print 'pre: %s' % (opts.prefix)
         
