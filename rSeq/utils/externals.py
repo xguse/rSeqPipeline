@@ -14,7 +14,11 @@ def mkdirp(path):
     """
 
     if not os.path.isdir(path):
-        os.makedirs(path)
+        try:
+            os.makedirs(path)
+        except OSError:
+            pass
+            
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 def runExternalApp(progName,argStr):
