@@ -134,7 +134,7 @@ def main():
     if not opts.galaxy:
         mkdirp(opts.dir)
     else:
-        opts.dir = opts.prefix.rstrip('/').split('/')[-1]
+        opts.dir = opts.prefix.rstrip('/')
         mkdirp('%s' % (opts.dir))
     
     # ------- Build Figs -------
