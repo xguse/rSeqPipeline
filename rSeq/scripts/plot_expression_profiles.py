@@ -135,7 +135,7 @@ def main():
         mkdirp(opts.dir)
     else:
         opts.dir = opts.prefix.rstrip('/')
-        mkdirp('%s' % (opts.dir))
+        mkdirp('%s/' % (opts.dir))
     
     # ------- Build Figs -------
     for gene in data:
