@@ -14,7 +14,7 @@ import pybedtools
 
 from rSeq.utils.errors import *
 from rSeq.utils.misc import Bag
-from rSeq.utils.files import fastaRec_length_indexer,tableFile2namedTuple
+from rSeq.utils.files import fastaRec_length_indexer,tableFile2namedTuple,mv_file_obj
 from rSeq.utils.expression import pearsonExpnFilter
 
 def mangle_expn_vectors(expnPath,txNameHeader,condHeaders,manualHeaders=False):
@@ -199,7 +199,11 @@ FASTA for use in motif discovery."""
     
     # CLEAN UP:
     # TODO: Close all tmp_files, and move to args.outDir
-    # 
+    for f in tmp_files:
+        tmp_files[f] = mv_file_obj(tmp_files[f],args.outDir,0755)
+        tmp_files[f].close()
+        
+    
 if __name__ == "__main__":
 
     main(args=sys.argv)
