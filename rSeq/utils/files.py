@@ -8,6 +8,69 @@ from rSeq.utils.errors import *
 from rSeq.utils.misc import Bag
 
 
+def fastaRec_length_indexer(fastaFiles):
+    """
+    GIVEN:
+    1) fastaFiles: list of fasta files or dirs containing fasta files
+    
+    DO:
+    1) iterate through all fasta files recording recName and length to a dict
+    
+    RETURN:
+    1) dict with recName and lengths
+    
+    NOTES:
+    1) will complain if it sees more than one fastaRec with the same name ONLY
+       if one of the length values disagrees with those already seen.
+    """
+    recDict = {}
+    tmpDict = collections.defaultdict(list)
+    
+    for each in fastaFiles:
+        try:
+            # if each is a directory, measure all recs in all fasta files in that dir (ignore subdirs)
+            paths = os.listdir(each)
+            for p in paths:
+                try:
+                    p = ParseFastA(p)
+                    for name,seq in p:
+                        tmpDict[name].append(len(seq))
+                except IOError:
+                    # most likely p was a dir, ignore
+                    ## TODO: logging code here to inform when this happens
+                    pass
+                except InvalidFileFormatError:
+                    # most likely p did not have valid fasta format, ignore
+                    ## TODO: logging code here to inform when this happens
+                    pass
+                        
+        except OSError as errTxt:
+            if not ('Not a directory' in errTxt):
+                raise
+            else:
+                # if each is a file, measure all recs in file
+                try:
+                    p = ParseFastA(each)
+                    for name,seq in p:
+                        tmpDict[name].append(len(seq))
+                except InvalidFileFormatError:
+                    # most likely p did not have valid fasta format, ignore
+                    ## TODO: logging code here to inform when this happens
+                    pass
+    
+    
+    for rec,lengths in tmpDict:
+        if not (len(set(lengths)) == 1):
+            # SANITY_CHECK: make sure that any duplicate fastaRecs gave the same length, if not: complain and die
+            raise SanityCheckError("Encountered fastaRec with lengths that do not agree: %s:%s" % (rec,lengths))
+        else:
+            # consolodate the lengths lists to a single number
+            recDict[rec] = lengths[0]
+    
+    return recDict
+    
+    
+
 def filter_PEfastQs(filterFunc,fwdMatePath,revMatePath,matchedPassPath1,matchedPassPath2,singlePassPath,nonPassPath):
     """
     Takes the paths to mated PE fastq files with coordinated read-ordering.
