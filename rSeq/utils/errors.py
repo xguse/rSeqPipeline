@@ -1,3 +1,6 @@
+class SanityCheckError(StandardError):
+    """When values that "should" not be possible happen; like if a variable was changed unexpectedly."""
+    pass
 
 class UnexpectedValueError(StandardError):
     """When values that "should" not be possible happen; like if a variable was changed unexpectedly."""
