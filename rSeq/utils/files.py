@@ -3,11 +3,55 @@ import sys
 import csv
 import collections
 import gzip
+import shutil
 
 from rSeq.utils.errors import *
 from rSeq.utils.misc import Bag
 
 
+def mv_file_obj(fileObj,newPath='',chmod=False):
+    """
+    GIVEN:
+    1) fileObj: file object to be moved 
+    2) newPath: new path (if not abs path, current working dir is used)
+       MUST at LEAST include a name for new file.
+    3) chmod: string to use for new file permissions (if False: no change).
+    
+    DO:
+    1) fileObj.flush()
+    2) use shutil.move(src,dest) to move file location.
+    3) change fileObj.name to the new name.
+    4) if file is tmpFile, make sure fileObj.delete == False
+       (I assume that if you care enough to move the file, you want to keep it)
+    5) chmod on new file to set permissions (remember to use octal: 0755 NOT 755)
+    
+    RETURN:
+    1) fileObj
+    """
+    if not 'file' in str(fileObj):
+        raise SanityCheckError("fileObj does not seem to be a file-like object: %s" % (str(fileObj)))
+    
+    try:
+        fileObj.delete = False
+    except AttributeError:
+        pass
+    
+    if not fileObj.closed:
+        fileObj.flush()
+    
+    if newPath == '':
+        newPath = fileObj.name.split('/')[-1]
+    if (not newPath.startswith('/')) and (not newPath.startswith('./')) and (not newPath.startswith('../')):
+        newPath = './%s' % (newPath)
+        
+    shutil.move(fileObj.name,newPath)
+    
+    fileObj.name = os.path.abspath(newPath)
+    if not chmod == False:
+        os.chmod(fileObj.name,int(chmod))
+        
+    return fileObj
+    
 def fastaRec_length_indexer(fastaFiles):
     """
     GIVEN:
