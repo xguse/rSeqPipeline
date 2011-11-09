@@ -68,6 +68,7 @@ def fastaRec_length_indexer(fastaFiles):
        if one of the length values disagrees with those already seen.
     """
     recDict = {}
+    seqDict = {}
     tmpDict = collections.defaultdict(list)
     
     for each in fastaFiles:
@@ -97,6 +98,7 @@ def fastaRec_length_indexer(fastaFiles):
                     p = ParseFastA(each)
                     for name,seq in p:
                         tmpDict[name].append(len(seq))
+                        seqDict[name] = seq
                 except InvalidFileFormatError:
                     # most likely p did not have valid fasta format, ignore
                     ## TODO: logging code here to inform when this happens
@@ -111,7 +113,7 @@ def fastaRec_length_indexer(fastaFiles):
             # consolodate the lengths lists to a single number
             recDict[rec] = lengths[0]
     
-    return recDict
+    return (recDict,seqDict)
     
     
 
