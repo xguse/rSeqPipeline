@@ -41,7 +41,7 @@ def mangle_expn_vectors(expnPath,txNameHeader,condHeaders,manualHeaders=False):
         raise SanityCheckError("txNameHeader must be type(''); you gave: %s." % (txNameHeader))
     if type([]) != type(condHeaders):
         raise SanityCheckError("condHeaders must be type([]); you gave: %s." % (condHeaders))
-    if manualHeaders != False:
+    if manualHeaders:
         if type([]) != type(manualHeaders):
             raise SanityCheckError("manualHeaders must be type([]); you gave: %s." % (manualHeaders))
     
