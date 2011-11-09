@@ -135,7 +135,7 @@ def write_fastas(txBed,genomeFasta,lenIndex,lenFlanks,tmpFileDict):
     # create flankBed
     txBed = pybedtools.BedTool(txBed)
     flankBed = txBed.flank(genome=lenIndex,l=lenFlanks,r=0,s=True).sequence(fi=genomeFasta,name=True,s=True)
-    tmpFileDict['flankBed'] = flankBed
+    tmpFileDict['flankBed'] = flankBed.fn
     return flankBed
 
 def main():
