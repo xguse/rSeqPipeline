@@ -29,7 +29,10 @@ def mv_file_obj(fileObj,newPath='',chmod=False):
     1) fileObj
     """
     if not 'file' in str(fileObj):
-        raise SanityCheckError("fileObj does not seem to be a file-like object: %s" % (str(fileObj)))
+        if not os.path.isfile(fileObj):
+            raise SanityCheckError("fileObj does not seem to be a file-like object: %s" % (str(fileObj)))
+        else:
+            fileObj = open(fileObj)
     
     try:
         fileObj.delete = False
