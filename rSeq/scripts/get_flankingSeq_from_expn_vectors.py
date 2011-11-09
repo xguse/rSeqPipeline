@@ -157,7 +157,7 @@ FASTA for use in motif discovery."""
     
     logger = logging.getLogger(sys.argv[0].split('/')[-1])
     
-    parser.add_argument('--expn-path', type=FileType('rU'), required=True,
+    parser.add_argument('--expn-path', type=str, required=True,
                         help="""Path to expression table file. \n(default: %(default)s)""")
     parser.add_argument('--tx-name', type=str, required=True,
                         help="""Name of the Tx you want to use as a model. (default: %(default)s)""")
@@ -175,7 +175,7 @@ FASTA for use in motif discovery."""
                         help="""The path to the gtf file that you want to use for your annotation. (default: %(default)s)""")
     parser.add_argument('--gtf-index', type=str, required=True,
                         help="""The path to the gtf index file generated from "gtf_to_genes". (default: %(default)s)""")
-    parser.add_argument('--genome-fastas', type=FileType('rU'), required=True, nargs='+',
+    parser.add_argument('--genome-fastas', type=str, required=True, nargs='+',
                         help="""A list of paths to genomic fasta files or directories where they are stored. (default: %(default)s)""")
     parser.add_argument('--flank-len', type=int, default=2000,
                         help="""The length in bp that should be harvested from the 5' end of the tx. (default: %(default)s)""")
