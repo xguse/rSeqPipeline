@@ -69,7 +69,7 @@ def filter_GTF_4_Tx(txList,g2gObj):
     txIdxDict = gtf_to_genes.index_transcripts(g2gObj, by_prot_id=False)
     
     for t in txList:
-        if t in txIndex:
+        if t in txIdxDict:
             keptTx[t] = txIdxDict[t]
         else:
             # TODO: !*!*! add logging code here !*!*!
