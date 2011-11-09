@@ -196,7 +196,7 @@ FASTA for use in motif discovery."""
     # remove vectors whose r's pVal is not significant (<=0.05)
     matchVectors = {}
     for key in filterDict:
-        if key[1] <= args.rpval:
+        if key[1] <= 0.05:
             matchVectors[key] = filterDict[key]
     
     # Sort txList so that the highest r values are at the top
