@@ -181,6 +181,8 @@ FASTA for use in motif discovery."""
                         help="""The length in bp that should be harvested from the 5' end of the tx. (default: %(default)s)""")
     parser.add_argument('--out-dir', type=str, default='.',
                         help="""A path to a directory where you would like the output files to be stored. (default: %(default)s)""")
+    parser.add_argument('--dump-megafasta', action='store_true',
+                        help="""Save concatonated fasta file for debugging. (default: %(default)s)""")
     
     args = parser.parse_args()
     
@@ -213,13 +215,18 @@ FASTA for use in motif discovery."""
     tmp_files['txBedFile'] = convert_2_bed(txDict=txDict)
     
     # 2: Use GTFs, BEDtools, and genome FASTAs to extract the upstream flanking sequences into a new FASTA
-    fastaRecLengths = fastaRec_length_indexer(fastaFiles=args.genome_fastas)
-    tmpFastaRecLengthFile = NamedTemporaryFile(mode='w+b',prefix='tmpFastaRecLengthFile.',suffix=".fas")
+    fastaRecLengths,fastaSeqs = fastaRec_length_indexer(fastaFiles=args.genome_fastas)
+    tmpFastaRecLengthFile = NamedTemporaryFile(mode='w+b',prefix='tmpFastaRecLengthFile.',suffix=".txt")
     for seqRec in fastaRecLengths:
         tmpFastaRecLengthFile.write("%s\t%s\n" % (seqRec,fastaRecLengths[seqRec]))
     tmpFastaRecLengthFile.flush()
+
+    # TODO: concatonate fasta files
+    megaFastaFile = NamedTemporaryFile(mode='w+b',prefix='tmpMegaFastaFile.',suffix=".fas")
+    if args.dump_megafasta:
+        tmp_files['megaFastaFile'] = megaFastaFile
         
-    flankBed = write_fastas(txBed=tmp_files.txBedFile.name,genomeFasta=tmp_files.megaFastaFile.name,lenIndex=tmpFastaRecLengthFile.name,lenFlanks=args.flank_len)
+    flankBed = write_fastas(txBed=tmp_files.txBedFile.name,genomeFasta=megaFastaFile.name,lenIndex=tmpFastaRecLengthFile.name,lenFlanks=args.flank_len)
     # 
     
     # CLEAN UP:
