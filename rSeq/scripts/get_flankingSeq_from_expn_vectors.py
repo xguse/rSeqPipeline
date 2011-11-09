@@ -190,7 +190,7 @@ FASTA for use in motif discovery."""
     # 1: Use a correlation filter to pull out any Tx that is sufficiently similar to the model Tx
     vectDict = mangle_expn_vectors(expnPath=args.expn_path,txNameHeader=args.tx_name_header,condHeaders=args.cond_headers,manualHeaders=args.manual_headers)
     
-    filterFunc = eval("lambda x: x %(pearson_filter_type)s %(pearson_filter_thresh)f" % args)
+    filterFunc = eval("lambda x: x %s %f" % (args.pearson_filter_type, args.pearson_filter_thresh))
     filterDict = pearsonExpnFilter(modelVector=vectDict[args.tx_name], targetVectors=vectDict, filterFunc=filterFunc)
     
     # remove vectors whose r's pVal is not significant (<=0.05)
