@@ -233,7 +233,7 @@ FASTA for use in motif discovery."""
     # TODO: Close all tmp_files, and move to args.outDir
     mkdirp(args.out_dir)
     for f in tmp_files:
-        tmp_files[f] = mv_file_obj(tmp_files[f],args.outDir,0755)
+        tmp_files[f] = mv_file_obj(tmp_files[f],args.out_dir,0755)
         tmp_files[f].close()
         
     
