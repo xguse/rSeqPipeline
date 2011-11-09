@@ -22,7 +22,7 @@ def pearsonExpnFilter(modelVector, targetVectors, filterFunc=None):
     rDict = {}
     
     for t in targetVectors:
-        rStats = stats.pearsonr(modelVector,targetVectors[t])
+        rStats = stats.pearsonr(float(modelVector),[float(x) for x in targetVectors[t]])
         if filterFunc(rStats[0]):
             rDict[rStats + (t,)] = targetVectors[t]
     return rDict
