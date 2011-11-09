@@ -226,7 +226,7 @@ FASTA for use in motif discovery."""
     if args.dump_megafasta:
         tmp_files['megaFastaFile'] = megaFastaFile
         
-    flankBed = write_fastas(txBed=tmp_files.txBedFile.name,genomeFasta=megaFastaFile.name,lenIndex=tmpFastaRecLengthFile.name,lenFlanks=args.flank_len)
+    flankBed = write_fastas(txBed=tmp_files.txBedFile.name,genomeFasta=megaFastaFile.name,lenIndex=tmpFastaRecLengthFile.name,lenFlanks=args.flank_len,tmpFileDict=tmp_files)
     # 
     
     # CLEAN UP:
