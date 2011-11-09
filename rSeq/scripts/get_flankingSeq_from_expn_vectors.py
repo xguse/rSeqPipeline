@@ -96,12 +96,12 @@ def convert_2_bed(txDict):
     bedLines = []
     
     for tx in txDict:
-        chrom      = str(tx.gene.contig)
-        chromStart = str(tx.beg)
-        chromEnd   = str(tx.end)
-        name       = str(tx.cdna_id)
+        chrom      = str(txDict[tx].gene.contig)
+        chromStart = str(txDict[tx].beg)
+        chromEnd   = str(txDict[tx].end)
+        name       = str(txDict[tx].cdna_id)
         score      = str(999)
-        strand     = str(tx.gene.strand)
+        strand     = str(txDict[tx].gene.strand)
         
         bedLines.append([chrom,chromStart,chromEnd,name,score,strand])
         
