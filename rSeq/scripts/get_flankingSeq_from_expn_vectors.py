@@ -7,6 +7,7 @@
 
 import sys,os
 import argparse
+import logging
 from tempfile import NamedTemporaryFile
 
 import gtf_to_genes
@@ -16,6 +17,7 @@ from rSeq.utils.errors import *
 from rSeq.utils.misc import Bag
 from rSeq.utils.files import fastaRec_length_indexer,tableFile2namedTuple,mv_file_obj
 from rSeq.utils.expression import pearsonExpnFilter
+from rSeq.utils.externals import mkdirp
 
 def mangle_expn_vectors(expnPath,txNameHeader,condHeaders,manualHeaders=False):
     """
@@ -136,7 +138,7 @@ def write_fastas(txBed,genomeFasta,lenIndex,lenFlanks,tmpFileDict):
     tmpFileDict['flankBed'] = flankBed
     return flankBed
 
-def main(args):
+def main():
     """
     1: Collect Tx from one or more species that are within at least some r value of similarity to
        a provided example Tx or a submitted hypothetical expression vector.
@@ -151,23 +153,45 @@ genome FASTAs to extract the upstream flanking sequences into a new
 FASTA for use in motif discovery."""
     
     parser = argparse.ArgumentParser(description=desc)
+    FileType = argparse.FileType
     
-    parser.add_argument('--tx-list', dest='txList', type=str, required=True, nargs='+',
-                        help="""help text goes here %(default)s""")
-    parser.add_argument('--gtf', dest='gtf', type=str, required=True,
-                        help="""help text goes here %(default)s""")
-    parser.add_argument('--genome-fastas', dest='genomeFastas', type=str, required=True, nargs='+',
-                        help="""(allow cat of files and/or dir contents)help text goes here %(default)s""")
-    parser.add_argument('--flank-len', dest='lenFlanks', type=int, required=True, nargs='+',
-                        help="""help text goes here %(default)s""")
+    logger = logging.getLogger(sys.argv[0].split('/')[-1])
+    
+    parser.add_argument('--expn-path', type=FileType('rU'), required=True,
+                        help="""Path to expression table file. \n(default: %(default)s)""")
+    parser.add_argument('--tx-name', type=str, required=True,
+                        help="""Name of the Tx you want to use as a model. (default: %(default)s)""")
+    parser.add_argument('--pearson-filter-type', type=str, default='>=', choices=['>=','<='],
+                        help="""Use >= to find similar expn profiles or <= to find opposite profiles. (default: %(default)s)""")
+    parser.add_argument('--pearson-filter-thresh', type=float, default=0.7,
+                        help="""Set the threshold of the Pearson r value for the filter. (default: %(default)s)""")
+    parser.add_argument('--tx-name-header', type=str, required=True,
+                        help="""The text of the header in the expn table where tx names are stored. (default: %(default)s)""")
+    parser.add_argument('--cond-headers', type=str, required=True, nargs='+',
+                        help="""A list of the text of the headers in the expn table where the values for each condition are stored (--cond-headers cond1 cond2 ...). (default: %(default)s)""")
+    parser.add_argument('--manual-headers', type=str, required=False, nargs='?',
+                        help="""If the expn table does not have headers, provide a list of ordered names for them here. (default: %(default)s)""")
+    parser.add_argument('--gtf', type=str, required=True,
+                        help="""The path to the gtf file that you want to use for your annotation. (default: %(default)s)""")
+    parser.add_argument('--gtf-index', type=str, required=True,
+                        help="""The path to the gtf index file generated from "gtf_to_genes". (default: %(default)s)""")
+    parser.add_argument('--genome-fastas', type=FileType('rU'), required=True, nargs='+',
+                        help="""A list of paths to genomic fasta files or directories where they are stored. (default: %(default)s)""")
+    parser.add_argument('--flank-len', type=int, default=2000,
+                        help="""The length in bp that should be harvested from the 5' end of the tx. (default: %(default)s)""")
+    parser.add_argument('--out-dir', type=str, default='.',
+                        help="""A path to a directory where you would like the output files to be stored. (default: %(default)s)""")
+    
+    args = parser.parse_args()
     
     # tmp files will be stored here
     tmp_files = Bag()
     
     # 1: Use a correlation filter to pull out any Tx that is sufficiently similar to the model Tx
-    vectDict = mangle_expn_vectors(expnPath,txNameHeader,condHeaders,manualHeaders=args.toSet)
+    vectDict = mangle_expn_vectors(expnPath=args.expn_path,txNameHeader=args.tx_name_header,condHeaders=args.cond_headers,manualHeaders=args.manual_headers)
     
-    filterDict = pearsonExpnFilter(modelVector=vectDict[args.toSet], targetVectors=vectDict, filterFunc=None)
+    filterFunc = eval("lambda x: x %(pearson_filter_type)s %(pearson_filter_thresh)f" % args)
+    filterDict = pearsonExpnFilter(modelVector=vectDict[args.tx_name], targetVectors=vectDict, filterFunc=filterFunc)
     
     # remove vectors whose r's pVal is not significant (<=0.05)
     matchVectors = {}
@@ -184,21 +208,23 @@ FASTA for use in motif discovery."""
     tmp_files['sortedTxListFile'] = sortedTxListFile
     sortedTxListFile.close()
     
-    txDict = filter_GTF_4_Tx(txList=[x[2] for x in txList],g2gObj=args.toSet)
+    g2gObj = gtf_to_genes.get_indexed_genes_matching_gtf_file_name(index_file_name=args.gtf_index, logger=logger, regex_str=args.gtf)[-1]
+    txDict = filter_GTF_4_Tx(txList=[x[2] for x in txList],g2gObj=g2gObj)
     tmp_files['txBedFile'] = convert_2_bed(txDict=txDict)
     
     # 2: Use GTFs, BEDtools, and genome FASTAs to extract the upstream flanking sequences into a new FASTA
-    fastaRecLengths = fastaRec_length_indexer(fastaFiles=args.toSet)
+    fastaRecLengths = fastaRec_length_indexer(fastaFiles=args.genome_fastas)
     tmpFastaRecLengthFile = NamedTemporaryFile(mode='w+b',prefix='tmpFastaRecLengthFile.',suffix=".fas")
     for seqRec in fastaRecLengths:
         tmpFastaRecLengthFile.write("%s\t%s\n" % (seqRec,fastaRecLengths[seqRec]))
     tmpFastaRecLengthFile.flush()
         
-    flankBed = write_fastas(txBed=tmp_files.txBedFile.name,genomeFasta=tmp_files.megaFastaFile.name,lenIndex=tmpFastaRecLengthFile.name,lenFlanks=args.toSet)
+    flankBed = write_fastas(txBed=tmp_files.txBedFile.name,genomeFasta=tmp_files.megaFastaFile.name,lenIndex=tmpFastaRecLengthFile.name,lenFlanks=args.flank_len)
     # 
     
     # CLEAN UP:
     # TODO: Close all tmp_files, and move to args.outDir
+    mkdirp(args.out_dir)
     for f in tmp_files:
         tmp_files[f] = mv_file_obj(tmp_files[f],args.outDir,0755)
         tmp_files[f].close()
@@ -206,4 +232,4 @@ FASTA for use in motif discovery."""
     
 if __name__ == "__main__":
 
-    main(args=sys.argv)
+    main()
