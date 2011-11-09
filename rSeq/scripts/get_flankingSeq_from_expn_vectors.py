@@ -233,7 +233,12 @@ FASTA for use in motif discovery."""
     # TODO: Close all tmp_files, and move to args.outDir
     mkdirp(args.out_dir)
     for f in tmp_files:
-        tmp_files[f] = mv_file_obj(tmp_files[f],args.out_dir,0755)
+        try:
+            os.path.isfile(tmp_files[f])
+            tmp_files[f] = open(tmp_files[f])
+        except:
+            pass
+        tmp_files[f] = mv_file_obj(tmp_files[f],"%s/%s" % (args.out_dir,tmp_files[f].name.split('/')[-1]),0755)
         tmp_files[f].close()
         
     
