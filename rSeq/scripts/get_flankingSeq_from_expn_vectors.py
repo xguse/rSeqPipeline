@@ -204,7 +204,7 @@ FASTA for use in motif discovery."""
     txList = sorted(matchVectors.keys(),key=lambda x: x[0], reverse=True)
     sortedTxListFile = NamedTemporaryFile(mode='w+t',prefix='txExpnVectFilteredBy_r.',suffix=".tsv",delete=False)
     for row in txList:
-        sortedTxListFile.write('%s\t$s\n' % ('\t'.join(map(str,row)), '\t'.join(map(str,txList[row]))))
+        sortedTxListFile.write('%s\n' % ('\t'.join(map(str,row))))
     tmp_files['sortedTxListFile'] = sortedTxListFile
     sortedTxListFile.close()
     
