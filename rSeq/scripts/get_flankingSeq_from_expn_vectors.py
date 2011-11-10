@@ -8,6 +8,7 @@
 import sys,os
 import argparse
 import logging
+import shutil
 from tempfile import NamedTemporaryFile
 
 import gtf_to_genes
@@ -101,7 +102,10 @@ def convert_2_bed(txDict):
         chromEnd   = str(txDict[tx].end)
         name       = str(txDict[tx].cdna_id)
         score      = str(999)
-        strand     = str(txDict[tx].gene.strand)
+        if txDict[tx].gene.strand == True:
+            strand = '+'
+        else:
+            strand = '-'
         
         bedLines.append([chrom,chromStart,chromEnd,name,score,strand])
         
@@ -115,7 +119,7 @@ def convert_2_bed(txDict):
     
     
     
-def write_fastas(txBed,genomeFasta,lenIndex,lenFlanks,tmpFileDict):
+def get_fastas(txBed,genomeFasta,lenIndex,lenFlanks):
     """
     GIVEN:
     1) txBed: path to TxBED tmp file
@@ -134,8 +138,8 @@ def write_fastas(txBed,genomeFasta,lenIndex,lenFlanks,tmpFileDict):
     
     # create flankBed
     txBed = pybedtools.BedTool(txBed)
-    flankBed = txBed.flank(genome=lenIndex,l=lenFlanks,r=0,s=True).sequence(fi=genomeFasta,name=True,s=True)
-    tmpFileDict['flankBed'] = flankBed.fn
+    flankBed = txBed.flank(g=lenIndex,l=lenFlanks,r=0,s=True)
+    flankBed.sequence(fi=genomeFasta,name=True,s=True)
     return flankBed
 
 def main():
@@ -223,24 +227,51 @@ FASTA for use in motif discovery."""
 
     # TODO: concatonate fasta files
     megaFastaFile = NamedTemporaryFile(mode='w+b',prefix='tmpMegaFastaFile.',suffix=".fas")
-    if args.dump_megafasta:
-        tmp_files['megaFastaFile'] = megaFastaFile
+    for fasta in fastaSeqs:
+        megaFastaFile.write('>%s\n%s\n' % (fasta,fastaSeqs[fasta]))
+    megaFastaFile.flush()
         
-    flankBed = write_fastas(txBed=tmp_files.txBedFile.name,genomeFasta=megaFastaFile.name,lenIndex=tmpFastaRecLengthFile.name,lenFlanks=args.flank_len,tmpFileDict=tmp_files)
-    # 
+    tmp_files['flankBed'] = get_fastas(txBed=tmp_files.txBedFile.name,genomeFasta=megaFastaFile.name,lenIndex=tmpFastaRecLengthFile.name,lenFlanks=args.flank_len)
+    
     
     # CLEAN UP:
     # TODO: Close all tmp_files, and move to args.outDir
     mkdirp(args.out_dir)
     for f in tmp_files:
         try:
-            os.path.isfile(tmp_files[f])
-            tmp_files[f] = open(tmp_files[f])
-        except:
+            tmp_files[f].delete = False
+        except AttributeError:
             pass
-        tmp_files[f] = mv_file_obj(tmp_files[f],"%s/%s" % (args.out_dir,tmp_files[f].name.split('/')[-1]),0755)
-        tmp_files[f].close()
-        
+        try:
+            tmp_files[f].close()
+        except AttributeError:
+            pass
+    # ['sortedTxListFile', 'flankBed', 'txBedFile', 'flankFasta']
+    sortedTxListFile = "%s/sortedTxList.tsv" % (args.out_dir)
+    flankBed         = "%s/flankBed.bed" % (args.out_dir)
+    txBedFile        = "%s/txBed.bed" % (args.out_dir)
+    flankFasta       = "%s/flankFasta.fas" % (args.out_dir)
+    
+    
+    shutil.move(tmp_files.sortedTxListFile.name, sortedTxListFile)
+    os.chmod(sortedTxListFile,0775)
+    
+    tmp_files.flankBed.saveas(flankBed)
+    os.chmod(flankBed,0775)
+    
+    shutil.move(tmp_files.txBedFile.name, txBedFile)
+    os.chmod(txBedFile,0775)
+    
+    shutil.move(tmp_files.flankBed.seqfn, flankFasta)
+    os.chmod(flankFasta,0775)
+    
+    if args.dump_megafasta:
+        megaFasta = "%s/megaFasta.fas" % (args.out_dir)
+        megaFastaFile.delete = False
+        megaFastaFile.close()
+        shutil.move(megaFastaFile.name, megaFasta)
+        os.chmod(megaFasta,0775)
+
     
 if __name__ == "__main__":
 
