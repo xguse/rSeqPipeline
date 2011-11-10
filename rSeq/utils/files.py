@@ -36,9 +36,8 @@ def mv_file_obj(fileObj,newPath='',chmod=False):
         fileObj.delete = False
     except AttributeError:
         pass
-    
     if not fileObj.closed:
-        fileObj.flush()
+        fileObj.close()
     
     if newPath == '':
         newPath = fileObj.name.split('/')[-1]
@@ -81,6 +80,7 @@ def fastaRec_length_indexer(fastaFiles):
                     p = ParseFastA(p)
                     for name,seq in p:
                         tmpDict[name].append(len(seq))
+                        seqDict[name] = seq
                 except IOError:
                     # most likely p was a dir, ignore
                     ## TODO: logging code here to inform when this happens
@@ -106,7 +106,7 @@ def fastaRec_length_indexer(fastaFiles):
                     pass
     
     
-    for rec,lengths in tmpDict:
+    for rec,lengths in tmpDict.iteritems():
         if not (len(set(lengths)) == 1):
             # SANITY_CHECK: make sure that any duplicate fastaRecs gave the same length, if not: complain and die
             raise SanityCheckError("Encountered fastaRec with lengths that do not agree: %s:%s" % (rec,lengths))
@@ -307,13 +307,18 @@ class ParseFastA(object):
         <key> is func used to parse the recName from HeaderInfo.
         """
         
-        self._file = open(filePath, 'rU')
+        if filePath.endswith('.gz'):
+            self._file = gzip.open(filePath)
+        else:
+            self._file = open(filePath, 'rU')
+            
         if key:
             self._key = key
         else:
             self._key = lambda x:x[1:].split()[0]
         self.bufferLine = None   # stores next headerLine between records.
         self.joinWith = joinWith
+        self._stop = False
         
     
     def __iter__(self):
@@ -322,6 +327,10 @@ class ParseFastA(object):
     def next(self):
         """Reads in next element, parses, and does minimal verification.
         Returns: tuple: (seqName,seqStr)"""
+        if not self._stop:
+            pass
+        else:
+            raise StopIteration
         # ++++ Get A Record ++++
         recHead = ''
         recData = []
@@ -331,22 +340,28 @@ class ParseFastA(object):
         else:
         # ++++ If not, seek one ++++
             while 1:
-                line = self._file.readline()
+                try:
+                    line = self._file.next()
+                except StopIteration:
+                    self._stop = True
+                    break
                 if line.startswith('>'):
                     recHead = line
                     break
                 elif not line:
                     raise InvalidFileFormatError, "CheckFastaFile: Encountered EOF before any data."
-                elif line.strip() == '':
+                elif line == '\n':
                     continue
                 else:
                     raise InvalidFileFormatError, 'CheckFastaFile: The first line containing text does not start with ">".'
         # ++++ Collect recData ++++
         while 1:
-            line = self._file.readline()
-            if not line:
-                raise StopIteration
-            elif line.startswith('>'):
+            try:
+                line = self._file.next()
+            except StopIteration:
+                self._stop = True
+                break
+            if line.startswith('>'):
                 self.bufferLine = line.strip('\n')
                 break
             elif not line.startswith('>'):
@@ -356,7 +371,8 @@ class ParseFastA(object):
         ## AddHere
         # ++++ Format Rec For Return ++++
         if not recData:
-            return None
+            recHead = self._key(recHead)
+            return (recHead,'')
         else:
             recHead = self._key(recHead)
             return (recHead,self.joinWith.join(recData))   
