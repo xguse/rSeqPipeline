@@ -1,5 +1,6 @@
 import subprocess
 import os
+import sys
 from rSeq.utils.errors import *
 
 # ++++++++ Verifiying/preparing external environment ++++++++
@@ -14,7 +15,13 @@ def mkdirp(path):
     """
 
     if not os.path.isdir(path):
-        os.makedirs(path)
+        try:
+            os.makedirs(path)
+        except OSError as errTxt:
+            if "File exists" in errTxt:
+                sys.stderr.write("FYI: %s" % (errTxt))
+            else:
+                raise
             
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
