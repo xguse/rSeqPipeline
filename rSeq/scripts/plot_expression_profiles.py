@@ -54,6 +54,8 @@ def main():
                       help="""Quoted comma delim'd string for x-axis tick text [TeX allowed]: "4 hrs,6 hrs,...". (default=%default)""")
     parser.add_option('--ylog',dest="ylog",action='store_true', default=False,
                       help="""Plot as y-axis as log. (default=%default)""")
+    parser.add_option('--line',dest="line",action='store_true', default=False,
+                      help="""Plot lines between points. (default=%default)""")
     parser.add_option('--overlay',dest="overlay",action='store_true', default=False,
                       help="""Plot all in same file. (default=%default)""")
     parser.add_option('--color',dest="color",type='string', default=None,
@@ -164,10 +166,13 @@ def main():
         else:
             yerr = None
             
-
+        if opts.line:
+            ls = '-'
+        else:
+            ls = 'None'
         pl.errorbar(x, y, yerr=yerr, xerr=None, fmt='s', ecolor='0.55',
                     elinewidth=None, capsize=7, barsabove=False, lolims=False,
-                    uplims=False, xlolims=False, xuplims=False, lw=3, ms=10, color=opts.color)
+                    uplims=False, xlolims=False, xuplims=False, lw=3, ms=10, ls=ls, color=opts.color)
         ax.set_xlim(-1,len(opts.conditions))
         
         if opts.xticks:
