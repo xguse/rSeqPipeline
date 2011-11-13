@@ -115,5 +115,5 @@ def slidingWindow(sequence,winSize,step=1):
     numOfChunks = ((len(sequence)-winSize)/step)+1
     
     # Do the work
-    for i in range(0,numOfChunks,step):
+    for i in range(0,numOfChunks*step,step):
         yield sequence[i:i+winSize]
