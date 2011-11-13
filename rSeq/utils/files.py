@@ -423,7 +423,7 @@ class ParseFastA(object):
                 f = self.next()
             except StopIteration:
                 break
-            fSplit  = f[0][1:].split(delim)
+            fSplit  = f[0].lstrip('>').rstrip('\n').split(delim)
             newHead = delim.join([fSplit[x] for x in order])
             outPath.write('>%s\n%s\n' % (newHead,f[1]))
         
