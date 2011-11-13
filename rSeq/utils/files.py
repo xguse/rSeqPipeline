@@ -5,6 +5,7 @@ import collections
 import gzip
 import shutil
 import tempfile
+import textwrap
 
 from rSeq.utils.errors import *
 from rSeq.utils.misc import Bag
@@ -397,7 +398,7 @@ class ParseFastA(object):
                 break
         return fasDict
     
-    def rewrite_headers(self,outPath,delim=' ',order=[],ow=False,chmod=755):
+    def rewrite_headers(self,outPath,lineLen=70,delim=' ',order=[],ow=False,chmod=755):
         """
         PURPOSE
         * reorganize the headers of a fasta file:
@@ -411,6 +412,7 @@ class ParseFastA(object):
         3) order is a list of index numbers from the original header, reorganized for the new header.
            Exp: delim=' ',order=[2,0,1]  would produce what is seen above.
         4) chmod= set new file with this mode (exp: 755)
+        5) lineLen sets fastaSeq line length in new file.
         """
         
         if ow:
@@ -425,7 +427,7 @@ class ParseFastA(object):
                 break
             fSplit  = f[0].lstrip('>').rstrip('\n').split(delim)
             newHead = delim.join([fSplit[x] for x in order])
-            outPath.write('>%s\n%s\n' % (newHead,f[1]))
+            outPath.write('>%s\n%s\n' % (newHead,'\n'.join(textwrap.wrap(f[1],width=lineLen))))
         
         self._file.close()
         
