@@ -5,10 +5,10 @@ import collections
 import gzip
 import shutil
 import tempfile
-import textwrap
+
 
 from rSeq.utils.errors import *
-from rSeq.utils.misc import Bag
+from rSeq.utils.misc import Bag,slidingWindow
 from rSeq.utils.externals import runExternalApp
 
 
@@ -427,7 +427,7 @@ class ParseFastA(object):
                 break
             fSplit  = f[0].lstrip('>').rstrip('\n').split(delim)
             newHead = delim.join([fSplit[x] for x in order])
-            outPath.write('>%s\n%s\n' % (newHead,'\n'.join(textwrap.wrap(f[1],width=lineLen))))
+            outPath.write('>%s\n%s\n' % (newHead,'\n'.join(slidingWindow(f[1],lineLen,lineLen))))
         
         self._file.close()
         
