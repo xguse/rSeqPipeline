@@ -4,9 +4,11 @@ import csv
 import collections
 import gzip
 import shutil
+import tempfile
 
 from rSeq.utils.errors import *
 from rSeq.utils.misc import Bag
+from rSeq.utils.externals import runExternalApp
 
 
 def mv_file_obj(fileObj,newPath='',chmod=False):
@@ -394,6 +396,56 @@ class ParseFastA(object):
             else:
                 break
         return fasDict
+    
+    def rewrite_headers(self,outPath,delim=' ',order=[],ow=False,chmod=755):
+        """
+        PURPOSE
+        * reorganize the headers of a fasta file:
+          >supercontig:CpipQ1:supercont3.1:1:3873040:1 supercontig supercont3.1
+          to 
+          >supercont3.1 supercontig:CpipQ1:supercont3.1:1:3873040:1 supercontig
+        
+        NOTES
+        1) If ow, ignores outPath
+        2) delim is what to spilt on
+        3) order is a list of index numbers from the original header, reorganized for the new header.
+           Exp: delim=' ',order=[2,0,1]  would produce what is seen above.
+        4) chmod= set new file with this mode (exp: 755)
+        """
+        
+        if ow:
+            outPath = tempfile.NamedTemporaryFile(suffix='.renamed.fas')
+        else:
+            outPath = open(outPath,'w')
+        
+        while 1:
+            try:
+                f = self.next()
+            except StopIteration:
+                break
+            fSplit  = f[0][1:].split(delim)
+            newHead = delim.join([fSplit[x] for x in order])
+            outPath.write('>%s\n%s\n' % (newHead,f[1]))
+        
+        self._file.close()
+        
+        absPath     = os.path.abspath
+        if ow:
+            outPath.flush()
+            outPath.delete = False
+            os.rename(absPath(outPath.name),absPath(self._file.name))
+                
+            try:
+                chmodResult = runExternalApp('chmod', '%s %s' % (chmod,absPath(self._file.name)))
+            except ExternalError as err:
+                sys.stderr.write('%s\n' % (err))
+        else:
+            try:
+                outPath.close()
+                chmodResult = runExternalApp('chmod', '%s %s' % (chmod,absPath(outPath.name)))
+            except ExternalError as err:
+                sys.stderr.write('%s\n' % (err))
+        
     
 
 
