@@ -427,7 +427,7 @@ class ParseFastA(object):
                 break
             fSplit  = f[0].lstrip('>').rstrip('\n').split(delim)
             newHead = delim.join([fSplit[x] for x in order])
-            outPath.write('>%s\n%s\n' % (newHead,'\n'.join(slidingWindow(f[1],lineLen,lineLen))))
+            outPath.write('>%s\n%s\n' % (newHead,'\n'.join(fold_seq(f[1],lineLen))))
         
         self._file.close()
         
