@@ -600,4 +600,28 @@ def onlyInA(fileA,fileB,outFile):
 
 
     
+def renameChrom_in_SAM(path):
+    """
+    """
+    import fileinput
+    path = os.path.abspath(path)
+    bkupPath = '%s.backup' % (path)
+    print path
+    print bkupPath
     
+    for line in fileinput.input(files=None, inplace=1, backup=".backup",
+                                bufsize=0,mode="r", openhook=None):
+        if line.startswith('@SQ'):
+            line = line.split('\t')
+            chrm = "SN:%s" % (line[1].split(':')[3])
+            line[1] = chrm
+            newPath.write('\t'.join(line))
+        elif line.startswith('HWI'):
+            line = line.split('\t')
+            chrm = line[2].split(':')[2]
+            line[2] = chrm
+            newPath.write('\t'.join(line))
+        else:
+            newPath.write(line)
+    path.close()
+    newPath.close()
