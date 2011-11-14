@@ -8,6 +8,41 @@ import cogent
 import pysam
 
 
+def mangle_expn_vectors(expnPath,txNameHeader,condHeaders,manualHeaders=False):
+    """
+    GIVEN:
+    1) expnPath: expn file path.
+    2) txNameHeader: header name where txName lives.
+    3) condHeaders: list of header names of conditions to be
+       included (order should be meaningful).
+    4) manualHeaders: manually set headers for the expn table file
+       (provide header name for EVERY column in file ONLY if no headers are already present).
+    
+    DO:
+    1) Extract the txName and condition expn levels from expnPath
+       and store in vectDict with txName as key and expn vector(list) as value.
+       
+    RETURN:
+    1) vectDict: see "DO:".
+    """
+    # Sanity checks
+    if type('') != type(txNameHeader):
+        raise SanityCheckError("txNameHeader must be type(''); you gave: %s." % (txNameHeader))
+    if type([]) != type(condHeaders):
+        raise SanityCheckError("condHeaders must be type([]); you gave: %s." % (condHeaders))
+    if manualHeaders:
+        if type([]) != type(manualHeaders):
+            raise SanityCheckError("manualHeaders must be type([]); you gave: %s." % (manualHeaders))
+    
+    # lets go    
+    expnTable = tableFile2namedTuple(tablePath=expnPath,sep='\t',headers=manualHeaders)
+    
+    vectDict = {}
+    for row in expnTable:
+        vectDict[row.__getattribute__(txNameHeader)] = [row.__getattribute__(x) for x in condHeaders]
+    
+    return vectDict
+
 def pearsonExpnFilter(modelVector, targetVectors, filterFunc=None):
     """
     modelVector:   ordered list of expression values per condition of model gene
