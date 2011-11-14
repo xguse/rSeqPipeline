@@ -8,7 +8,7 @@ import tempfile
 
 
 from rSeq.utils.errors import *
-from rSeq.utils.misc import Bag,slidingWindow
+from rSeq.utils.misc import Bag,fold_seq
 from rSeq.utils.externals import runExternalApp
 
 
