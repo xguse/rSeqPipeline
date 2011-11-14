@@ -6,7 +6,7 @@ from optparse import IndentedHelpFormatter
 class RseqHelpFormatter(IndentedHelpFormatter):
     """Custom help formatter for optparse that allows
     me to break text into paragraphs!"""
-    
+
     def __init__(self,
                  indent_increment=0,
                  max_help_position=80,
@@ -32,7 +32,7 @@ class RseqHelpFormatter(IndentedHelpFormatter):
                              replace_whitespace=False,
                              drop_whitespace=True,
                              expand_tabs=True)
-    
+
 
 
 # From Titus Brown's gff parser:
@@ -53,16 +53,16 @@ class Bag(dict):
     def __setitem__(self, k, v):
         dict.__setitem__(self, k, v)
         self.__dict__[k] = v
-        
+
 def pVal4mari(tabPath,tTx,tTxDN,tTxUP):
     """
     tTx=   total transcripts,
     tTxUP= total Tx sig up Reg
     tTxDN= total Tx sig dwn reg,
-    
+
     Takes named tuple data table in format:
     type,total,down,up,tDE
-    
+
     Returns list of pValues in format:
     [(type1,pVal_dwn1,pVal_up1,pVal_tde1),
     ...,
@@ -78,7 +78,7 @@ def pVal4mari(tabPath,tTx,tTxDN,tTxUP):
         N=samplSize
         """
         return 1-hypergeom.cdf(x,M,n,N)+hypergeom.pmf(x,M,n,N)
-    
+
     namdTup = tableFile2namedTuple(tabPath,sep=',')
     rData = []
     for i in range(len(namdTup)):
@@ -88,9 +88,9 @@ def pVal4mari(tabPath,tTx,tTxDN,tTxUP):
         pDE  = cHgPvl(int(t.tDE),tTx,int(t.total),(tTxDN+tTxUP))
         rData.append((t.type,pDwn,pUp,pDE))
     return rData
-        
-        
-    
+
+
+
 def whoami():
     """Returns the name of the currently active function."""
     return sys._getframe(1).f_code.co_name
@@ -99,7 +99,7 @@ def slidingWindow(sequence,winSize,step=1):
     """Returns a generator that will iterate through
     the defined chunks of input sequence.  Input sequence
     must be iterable."""
-    
+
     # Verify the inputs
     try: it = iter(sequence)
     except TypeError:
@@ -110,10 +110,14 @@ def slidingWindow(sequence,winSize,step=1):
         raise Exception("**ERROR** step must not be larger than winSize.")
     if winSize > len(sequence):
         raise Exception("**ERROR** winSize must not be larger than sequence length.")
-    
+
     # Pre-compute number of chunks to emit
     numOfChunks = ((len(sequence)-winSize)/step)+1
-    
+
     # Do the work
     for i in range(0,numOfChunks*step,step):
         yield sequence[i:i+winSize]
+
+def fold_seq(seq, lineLen=70):
+    return [seq[i:i+lineLen] for i in xrange(0, len(seq), lineLen)]
+        
