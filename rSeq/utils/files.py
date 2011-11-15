@@ -605,23 +605,24 @@ def renameChrom_in_SAM(path):
     """
     import fileinput
     path = os.path.abspath(path)
-    bkupPath = '%s.backup' % (path)
-    print path
-    print bkupPath
+    bkExt = ".zap_me.backup"
+    bkPath = path + bkExt
     
-    for line in fileinput.input(files=None, inplace=1, backup=".backup",
-                                bufsize=0,mode="r", openhook=None):
-        if line.startswith('@SQ'):
-            line = line.split('\t')
-            chrm = "SN:%s" % (line[1].split(':')[3])
-            line[1] = chrm
-            newPath.write('\t'.join(line))
-        elif line.startswith('HWI'):
-            line = line.split('\t')
-            chrm = line[2].split(':')[2]
-            line[2] = chrm
-            newPath.write('\t'.join(line))
-        else:
-            newPath.write(line)
-    path.close()
-    newPath.close()
+    try:
+        for line in fileinput.input(files=path, inplace=1, backup=bkExt,
+                                    bufsize=0,mode="r", openhook=None):
+            if line.startswith('@SQ'):
+                line = line.split('\t')
+                chrm = "SN:%s" % (line[1].split(':')[3])
+                line[1] = chrm
+                sys.stdout.write('\t'.join(line))
+            elif line.startswith('HWI'):
+                line = line.split('\t')
+                chrm = line[2].split(':')[2]
+                line[2] = chrm
+                sys.stdout.write('\t'.join(line))
+            else:
+                sys.stdout.write(line)
+    except:
+        raise RuntimeError("Failed while converting %s: backedup at %s." % (path,bkPath))
+
