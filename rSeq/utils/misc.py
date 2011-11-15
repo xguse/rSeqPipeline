@@ -1,5 +1,9 @@
 import sys
+import inspect
 import textwrap
+import smtplib
+from email.MIMEMultipart import MIMEMultipart
+from email.MIMEText import MIMEText
 from optparse import IndentedHelpFormatter
 
 
@@ -93,7 +97,7 @@ def pVal4mari(tabPath,tTx,tTxDN,tTxUP):
 
 def whoami():
     """Returns the name of the currently active function."""
-    return sys._getframe(1).f_code.co_name
+    return inspect.stack()[1][3]
 
 def slidingWindow(sequence,winSize,step=1):
     """Returns a generator that will iterate through
@@ -121,3 +125,38 @@ def slidingWindow(sequence,winSize,step=1):
 def fold_seq(seq, lineLen=70):
     return [seq[i:i+lineLen] for i in xrange(0, len(seq), lineLen)]
         
+
+def email_notification(sender,to,subject,txt,pw):
+    """
+    """
+    try:
+        msg = MIMEMultipart()
+        msg['From'] = sender
+        msg['To'] = to
+        msg['Subject'] = subject
+        msg.attach(MIMEText(txt))
+        
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.ehlo()
+        server.starttls()
+        server.ehlo()
+        server.login(sender,pw)
+        server.sendmail(sender,to,msg.as_string())
+        server.close()
+    except (smtplib.SMTPAuthenticationError,
+    smtplib.SMTPConnectError,
+    smtplib.SMTPDataError,
+    smtplib.SMTPException,
+    smtplib.SMTPHeloError,
+    smtplib.SMTPRecipientsRefused,
+    smtplib.SMTPResponseException,
+    smtplib.SMTPSenderRefused,
+    smtplib.SMTPServerDisconnected) as e:
+        sys.stderr.write("Warning: %s was caught while trying to send your mail.\nContent:%s\n" % (e.__class__.__name__,e.message))
+        
+    
+        
+        
+    
+
+    
