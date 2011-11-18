@@ -1,11 +1,14 @@
 import sys
 import os
 
+import cogent
+import pysam
 import scipy.stats as stats
 
 from rSeq.utils.errors import *
-import cogent
-import pysam
+from rSeq.utils.files import tableFile2namedTuple
+
+
 
 
 def mangle_expn_vectors(expnPath,txNameHeader,condHeaders,manualHeaders=False):
@@ -39,7 +42,7 @@ def mangle_expn_vectors(expnPath,txNameHeader,condHeaders,manualHeaders=False):
     
     vectDict = {}
     for row in expnTable:
-        vectDict[row.__getattribute__(txNameHeader)] = [row.__getattribute__(x) for x in condHeaders]
+        vectDict[row.__getattribute__(txNameHeader)] = [float(row.__getattribute__(x)) for x in condHeaders]
     
     return vectDict
 
