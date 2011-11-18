@@ -624,5 +624,5 @@ def renameChrom_in_SAM(path):
             else:
                 sys.stdout.write(line)
     except:
-        raise RuntimeError("Failed while converting %s: backedup at %s." % (path,bkPath))
+        raise
 
