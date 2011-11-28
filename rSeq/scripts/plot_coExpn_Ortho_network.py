@@ -126,23 +126,24 @@ you list the same number of conditions for each expnfile and that the order refl
     
     
     # weight the edges in subgraph by the pearsonr between their expression vectors
-    weight_edges_with_pearsonr(graphObj=subgraph,dataVectors=xDict)
+    weight_edges_with_pearsonr(graphObj=subgraph,dataVectors=xDict,uni=False)
     
     # if the edge length is imposible to graph (inf or nan) kill the edge
     badEdges = []
     for i,j in subgraph.edges_iter():
-        if math.isnan(subgraph[i][j]['len']) or math.isinf(subgraph[i][j]['len']):
+        if math.isnan(subgraph[i][j]['rVal']) or math.isinf(subgraph[i][j]['rVal']):
             badEdges.append((i,j))
     subgraph.remove_edges_from(badEdges)
     
     
     # begin drawing the graph by setting the node positions
-    a = nx.to_agraph(subgraph)
-    a.layout()
-    a.draw('%s.gv.png' % args.out)
-    h = nx.from_agraph(a)
-    pos = nx.graphviz_layout(h)
-    #pos= nx.spring_layout(subgraph,pos=pos,iterations=1)
+    #a = nx.to_agraph(subgraph)
+    #a.layout()
+    #a.draw('%s.gv.png' % args.out)
+    #h = nx.from_agraph(a)
+    #pos = nx.graphviz_layout(h)
+    #pos= nx.spring_layout(subgraph,iterations=100)
+    pos = nx.graphviz_layout(subgraph, args='-LC5')
     
     # set node colors
     nodelist = subgraph.nodes()
@@ -157,12 +158,62 @@ you list the same number of conditions for each expnfile and that the order refl
     for n in nodelist:
         # crazy list comprehension python-voodoo to create a list of colors in the same order as nodelist
         node_colors.extend([cDict[x] for x in prefixes if n.startswith(x)])
-    nx.draw_networkx_nodes(subgraph, pos,nodelist,node_color=node_colors,node_size=100)
-    nx.draw_networkx_edges(subgraph, pos, edgelist=[e for e in subgraph.edges_iter() if float(subgraph[e[0]][e[1]]['rVal']) >= 0], width=2.0, edge_color='k', style='solid', alpha=.5)
-    nx.draw_networkx_edges(subgraph, pos, edgelist=[e for e in subgraph.edges_iter() if float(subgraph[e[0]][e[1]]['rVal']) < 0], width=2.0, edge_color='r', style='solid', alpha=.5)
-    nx.draw_networkx_edge_labels(subgraph,pos,edge_labels=eLab)
+    nx.draw_networkx_nodes(subgraph, pos,nodelist,node_color=node_colors,node_size=1000,node_shape='o')
+    sigEdges = []
+    nonSigEdges = []
+    for e in subgraph.edges_iter():
+        if float(subgraph[e[0]][e[1]]['pVal']) <= 0.05:
+            sigEdges.append(e)
+        else:
+            nonSigEdges.append(e)
+            
+    # Define color map for edge 'heats'
+    g2r = {'green': ((0.0, 0.0, 0.0),
+                     (0.66, 0.0, 0.0),
+                     (1.0, 1.0, 1.0)),
+ 
+          'blue': ((0.0, 0.0, 0.0),
+                   (1.0, 0.0, 0.0)),
+ 
+          'red':  ((0.0, 1.0, 1.0),
+                   (0.33, 0.0, 0.0),
+                   (1.0, 0.0, 0.0))} 
+    
+    
+    b2g2y2o2r = {'red':   ((0.0,  0.0, 0.0),
+                          #(0.9,  1.0, 1.0),
+                          (1.0,  1.0, 1.0)),
+       
+                'green': ((0.0,  0.0, 0.0),
+                          (0.4, 1.0, 1.0),
+                          (0.6, 1.0, 1.0),
+                          (1.0, 0.0, 0.0)),
+       
+                'blue':  ((0.0,  1.0,1.0),
+                          #(0.1,  0.0, 0.0),
+                          (1.0,  0.0, 0.0))}
+    
+    plt.register_cmap(name='corrMap', data=b2g2y2o2r)
+    corrMap = plt.get_cmap('corrMap')
+    
+            
+    nx.draw_networkx_edges(subgraph, pos, edgelist=sigEdges, width=2.0, edge_cmap=corrMap,
+                           edge_vmin=-1,
+                           edge_vmax=1,                           
+                           edge_color=[subgraph[e[0]][e[1]]['weight'] for e in sigEdges],
+                           style='solid', alpha=1)
+    nx.draw_networkx_edges(subgraph, pos, edgelist=nonSigEdges, width=2.0, edge_cmap=corrMap,
+                           edge_vmin=-1,
+                           edge_vmax=1,                           
+                           edge_color=[subgraph[e[0]][e[1]]['weight'] for e in nonSigEdges],
+                           style='dotted', alpha=1)
+    
+    # add color bar as key to heats
+    plt.colorbar()
+    
+    #nx.draw_networkx_edge_labels(subgraph,pos,edge_labels=eLab)
     if not args.nonames:
-        nx.draw_networkx_labels(subgraph, pos)
+        nx.draw_networkx_labels(subgraph, pos, font_weight='bold', font_size=14)
     plt.axis('off')
     
     # write out the file(s)
