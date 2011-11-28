@@ -69,6 +69,7 @@ def main():
                       help="""Save figs as: """ + str(figTypes) + """. (default=%default)""")
     
     (opts, args) = parser.parse_args()
+    print args
     print opts
     if len(sys.argv) == 1:
         parser.print_help()
