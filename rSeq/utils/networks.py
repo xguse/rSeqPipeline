@@ -57,11 +57,12 @@ def graph_connected_nodes(graphObj,nodeList):
             
     return nx.Graph(graphObj.subgraph(subNodes))
 
-def weight_edges_with_pearsonr(graphObj,dataVectors):
+def weight_edges_with_pearsonr(graphObj,dataVectors,uni=False):
     """
     GIVEN:
     1) graphObj = networkx.Graph() instance.
     2) dataVectors = dict of expression vectors with keys==TxName
+    3) uni = if true, weight all edges the same
     
     DO:
     1) Iterate through all edges in graphObj.
@@ -71,8 +72,12 @@ def weight_edges_with_pearsonr(graphObj,dataVectors):
     RETURN:
     1) None
     """
-    
-    for node1,node2 in graphObj.edges_iter():
-        r_val,p_val = scipy.stats.pearsonr(dataVectors[node1],dataVectors[node2])
-        graphObj.add_edge(node1, node2, attr_dict={'rVal':r_val,'pVal':p_val,'len':(10/abs(r_val))})
+    if not uni:
+        for node1,node2 in graphObj.edges_iter():
+            r_val,p_val = scipy.stats.pearsonr(dataVectors[node1],dataVectors[node2])
+            graphObj.add_edge(node1, node2, attr_dict={'rVal':r_val,'pVal':p_val,'weight':r_val})
+    else:
+        for node1,node2 in graphObj.edges_iter():
+                    r_val,p_val = scipy.stats.pearsonr(dataVectors[node1],dataVectors[node2])
+                    graphObj.add_edge(node1, node2, attr_dict={'rVal':r_val,'pVal':p_val,'weight':0})        
         
