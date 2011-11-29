@@ -136,6 +136,8 @@ FASTA for use in motif discovery."""
                         help="""Use >= to find similar expn profiles or <= to find opposite profiles. (default: %(default)s)""")
     parser.add_argument('--pearson-filter-thresh', type=float, default=0.7,
                         help="""Set the threshold of the Pearson r value for the filter. (default: %(default)s)""")
+    parser.add_argument('--pval-filter-thresh', type=float, default=0.05,
+                            help="""Set the upper threshold for the p-value of the Pearson r values to keep. (default: %(default)s)""")    
     parser.add_argument('--tx-name-header', type=str, required=True,
                         help="""The text of the header in the expn table where tx names are stored. (default: %(default)s)""")
     parser.add_argument('--cond-headers', type=str, required=True, nargs='+',
@@ -169,7 +171,7 @@ FASTA for use in motif discovery."""
     # remove vectors whose r's pVal is not significant (<=0.05)
     matchVectors = {}
     for key in filterDict:
-        if key[1] <= 0.05:
+        if key[1] <= args.pval_filter_thresh:
             matchVectors[key] = filterDict[key]
     
     # Sort txList so that the highest r values are at the top
