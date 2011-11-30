@@ -174,6 +174,8 @@ FASTA for use in motif discovery."""
         if key[1] <= args.pval_filter_thresh:
             matchVectors[key] = filterDict[key]
     
+    # impose a distance filter to  
+    
     # Sort txList so that the highest r values are at the top
     # and save vectors and this info out to file
     txList = sorted(matchVectors.keys(),key=lambda x: x[0], reverse=True)
