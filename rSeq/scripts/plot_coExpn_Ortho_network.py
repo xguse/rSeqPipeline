@@ -130,10 +130,16 @@ you list the same number of conditions for each expnfile and that the order refl
     
     # if the edge length is imposible to graph (inf or nan) kill the edge
     badEdges = []
+    edgesMissingNodes = []
     for i,j in subgraph.edges_iter():
-        if math.isnan(subgraph[i][j]['rVal']) or math.isinf(subgraph[i][j]['rVal']):
-            badEdges.append((i,j))
+        try:
+            if math.isnan(subgraph[i][j]['rVal']) or math.isinf(subgraph[i][j]['rVal']):
+                badEdges.append((i,j))
+        except KeyError:
+            edgesMissingNodes.append((i,j))
+                
     subgraph.remove_edges_from(badEdges)
+    subgraph.remove_edges_from(edgesMissingNodes)
     
     
     # begin drawing the graph by setting the node positions
@@ -197,16 +203,20 @@ you list the same number of conditions for each expnfile and that the order refl
     corrMap = plt.get_cmap('corrMap')
     
             
-    nx.draw_networkx_edges(subgraph, pos, edgelist=sigEdges, width=2.0, edge_cmap=corrMap,
-                           edge_vmin=-1,
-                           edge_vmax=1,                           
-                           edge_color=[subgraph[e[0]][e[1]]['weight'] for e in sigEdges],
-                           style='solid', alpha=1)
+    
     nx.draw_networkx_edges(subgraph, pos, edgelist=nonSigEdges, width=2.0, edge_cmap=corrMap,
                            edge_vmin=-1,
                            edge_vmax=1,                           
                            edge_color=[subgraph[e[0]][e[1]]['weight'] for e in nonSigEdges],
-                           style='dotted', alpha=1)
+                           style='dashed', alpha=.3)
+    nx.draw_networkx_edges(subgraph, pos, edgelist=sigEdges, width=2.0, edge_cmap=corrMap,
+                               edge_vmin=-1,
+                               edge_vmax=1,                           
+                               edge_color=[subgraph[e[0]][e[1]]['weight'] for e in sigEdges],
+                               style='solid', alpha=1)    
+    nx.draw_networkx_edges(subgraph, pos, edgelist=badEdges, width=1.0,                         
+                               edge_color='grey',
+                               style='solid', alpha=.6)    
     
     # add color bar as key to heats
     plt.colorbar()

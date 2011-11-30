@@ -74,10 +74,15 @@ def weight_edges_with_pearsonr(graphObj,dataVectors,uni=False):
     """
     if not uni:
         for node1,node2 in graphObj.edges_iter():
-            r_val,p_val = scipy.stats.pearsonr(dataVectors[node1],dataVectors[node2])
-            graphObj.add_edge(node1, node2, attr_dict={'rVal':r_val,'pVal':p_val,'weight':r_val})
+            try:
+                r_val,p_val = scipy.stats.pearsonr(dataVectors[node1],dataVectors[node2])
+                graphObj.add_edge(node1, node2, attr_dict={'rVal':r_val,'pVal':p_val,'weight':r_val})
+            except KeyError as e:
+                sys.stderr.write('node not found: %s\n' % str(e))
     else:
         for node1,node2 in graphObj.edges_iter():
-                    r_val,p_val = scipy.stats.pearsonr(dataVectors[node1],dataVectors[node2])
-                    graphObj.add_edge(node1, node2, attr_dict={'rVal':r_val,'pVal':p_val,'weight':0})        
-        
+            try:
+                r_val,p_val = scipy.stats.pearsonr(dataVectors[node1],dataVectors[node2])
+                graphObj.add_edge(node1, node2, attr_dict={'rVal':r_val,'pVal':p_val,'weight':0})        
+            except KeyError as e:
+                sys.stderr.write('node not found: %s\n' % str(e))            
