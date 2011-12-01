@@ -13,9 +13,11 @@ from tempfile import NamedTemporaryFile
 
 import gtf_to_genes
 import pybedtools
+import numpy as np
 
 from rSeq.utils.errors import *
 from rSeq.utils.misc import Bag
+from rSeq.utils.stats import basic_bootstrap_est
 from rSeq.utils.files import fastaRec_length_indexer,tableFile2namedTuple,mv_file_obj
 from rSeq.utils.expression import pearsonExpnFilter,mangle_expn_vectors
 from rSeq.utils.externals import mkdirp
@@ -108,7 +110,8 @@ def get_fastas(txBed,genomeFasta,lenIndex,lenFlanks):
     flankBed = txBed.flank(g=lenIndex,l=lenFlanks,r=0,s=True)
     flankBed.sequence(fi=genomeFasta,name=True,s=True)
     return flankBed
-
+            
+    
 def main():
     """
     1: Collect Tx from one or more species that are within at least some r value of similarity to
@@ -169,19 +172,45 @@ FASTA for use in motif discovery."""
     filterDict = pearsonExpnFilter(modelVector=vectDict[args.tx_name], targetVectors=vectDict, filterFunc=filterFunc)
     
     # remove vectors whose r's pVal is not significant (<=0.05)
-    matchVectors = {}
+    sigVectors = {}
     for key in filterDict:
         if key[1] <= args.pval_filter_thresh:
-            matchVectors[key] = filterDict[key]
+            sigVectors[key] = filterDict[key]
     
-    # impose a distance filter to  
+    # Impose a distance filter to further refine the gene set
+    # incorperating magnitudes of the absolute levels of gene expression
+    
+    # set the boundries of acceptable deviation for the target gene mean expression
+    # mangitude by bootstrapping.  The metric for comparison will be the average of
+    # the differences of each point in remaining vectors against the target
+    # vector.
+    
+    # 1) calc the metrics for each remaining gene's vector
+    #    PS: numpy rocks.
+    avgDists = {}
+    for key in sigVectors:
+        avgDist_i = np.mean(np.subtract(vectDict[args.tx_name],
+                                           sigVectors[key]))
+        avgDists[key] = avgDist_i
+        
+    # 2) bootstrap that bitch and give me a stdErr!
+    medianEst,stdErrEst,lo95,hi95 = basic_bootstrap_est(avgDists.values())
+    
+    # 3) recover keys that fall within +/- 1 SE
+    matchVectors = {}
+    for key in avgDists:
+        avgDist = avgDists[key]
+        if (avgDist >= -stdErrEst) and (avgDist <= stdErrEst):
+            matchVectors[key] = sigVectors[key]
+    
+        
     
     # Sort txList so that the highest r values are at the top
     # and save vectors and this info out to file
     txList = sorted(matchVectors.keys(),key=lambda x: x[0], reverse=True)
     sortedTxListFile = NamedTemporaryFile(mode='w+t',prefix='txExpnVectFilteredBy_r.',suffix=".tsv",delete=False)
     for row in txList:
-        sortedTxListFile.write('%s\t%s\n' % ('\t'.join(map(str,row)),'\t'.join(matchVectors[row[2]])))
+        sortedTxListFile.write('%s\t%s\n' % ('\t'.join(map(str,row)),'\t'.join(matchVectors[row])))
     tmp_files['sortedTxListFile'] = sortedTxListFile
     sortedTxListFile.close()
     

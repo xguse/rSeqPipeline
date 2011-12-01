@@ -1,7 +1,45 @@
 from decimal import Decimal
 import numpy as np
 import operator as o
-# see bottom for conditional import of "bestChoose"    
+# see bottom for conditional import of "bestChoose" 
+
+
+
+def basic_bootstrap_est(vec,reps=1000):
+    """
+    GIVEN:
+    1) vec = vector of sample values
+    2) reps = number of resampling reps
+    
+    DO:
+    1) Resample w/ replacement *reps* times and record the medians
+    2) Calculate stdv of resampled medians which should approach
+       the actual SE as *reps* approaches *inf*.
+    3) Calculate the 95% CI bounds.
+       
+       
+    
+    RETURN:
+    1) tuple([*median of resampled medians*, *SE est*, *loBound*, *hiBound*])
+    """
+    
+    reSampledMeds = []
+    sampleSize = len(vec)
+    
+    for rep in range(reps):
+        sample = []
+        for draw in range(sampleSize):
+            randIndex = np.random.randint(0,sampleSize)
+            sample.append(vec[randIndex])
+        reSampledMeds.append(np.median(sample))
+        
+    seEstimate = np.std(reSampledMeds,ddof=1)
+    medOfMeds = np.median(reSampledMeds)
+    
+    return (medOfMeds,
+            seEstimate,
+            np.percentile(reSampledMeds,2.5),
+            np.percentile(reSampledMeds,97.5))
 
 def benjHochFDR(pVals,pValColumn=1,FDR=0.05):
     """
