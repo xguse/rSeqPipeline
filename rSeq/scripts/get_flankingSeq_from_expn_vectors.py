@@ -156,6 +156,8 @@ FASTA for use in motif discovery."""
                         help="""A path to a directory where you would like the output files to be stored. (default: %(default)s)""")
     parser.add_argument('--dump-megafasta', action='store_true',
                         help="""Save concatonated fasta file for debugging. (default: %(default)s)""")
+    parser.add_argument('--dump-stats', action='store_true',
+                            help="""Print a list of Tx/gene names and the r- p-values that passed the filter and exit without getting fastas. (default: %(default)s)""")    
     
     args = parser.parse_args()
     
