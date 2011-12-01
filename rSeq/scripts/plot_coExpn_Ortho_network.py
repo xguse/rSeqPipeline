@@ -208,7 +208,7 @@ you list the same number of conditions for each expnfile and that the order refl
                            edge_vmin=-1,
                            edge_vmax=1,                           
                            edge_color=[subgraph[e[0]][e[1]]['weight'] for e in nonSigEdges],
-                           style='dashed', alpha=.3)
+                           style='dashed', alpha=.7)
     nx.draw_networkx_edges(subgraph, pos, edgelist=sigEdges, width=2.0, edge_cmap=corrMap,
                                edge_vmin=-1,
                                edge_vmax=1,                           
@@ -216,7 +216,7 @@ you list the same number of conditions for each expnfile and that the order refl
                                style='solid', alpha=1)    
     nx.draw_networkx_edges(subgraph, pos, edgelist=badEdges, width=1.0,                         
                                edge_color='grey',
-                               style='solid', alpha=.6)    
+                               style='solid', alpha=.7)    
     
     # add color bar as key to heats
     plt.colorbar()
