@@ -17,7 +17,7 @@ import numpy as np
 
 from rSeq.utils.errors import *
 from rSeq.utils.misc import Bag
-from rSeq.utils.stats import basic_bootstrap_est
+#from rSeq.utils.stats import basic_bootstrap_est
 from rSeq.utils.files import fastaRec_length_indexer,tableFile2namedTuple,mv_file_obj
 from rSeq.utils.expression import pearsonExpnFilter,mangle_expn_vectors
 from rSeq.utils.externals import mkdirp
@@ -178,32 +178,33 @@ FASTA for use in motif discovery."""
     for key in filterDict:
         if key[1] <= args.pval_filter_thresh:
             sigVectors[key] = filterDict[key]
+    matchVectors = sigVectors
     
-    # Impose a distance filter to further refine the gene set
-    # incorperating magnitudes of the absolute levels of gene expression
+    ## Impose a distance filter to further refine the gene set
+    ## incorperating magnitudes of the absolute levels of gene expression
     
-    # set the boundries of acceptable deviation for the target gene mean expression
-    # mangitude by bootstrapping.  The metric for comparison will be the average of
-    # the differences of each point in remaining vectors against the target
-    # vector.
+    ## set the boundries of acceptable deviation for the target gene mean expression
+    ## mangitude by bootstrapping.  The metric for comparison will be the average of
+    ## the differences of each point in remaining vectors against the target
+    ## vector.
     
-    # 1) calc the metrics for each remaining gene's vector
-    #    PS: numpy rocks.
-    avgDists = {}
-    for key in sigVectors:
-        avgDist_i = np.mean(np.subtract(vectDict[args.tx_name],
-                                           sigVectors[key]))
-        avgDists[key] = avgDist_i
+    ## 1) calc the metrics for each remaining gene's vector
+    ##    PS: numpy rocks.
+    ##avgDists = {}
+    ##for key in sigVectors:
+        ##avgDist_i = np.mean(np.subtract(vectDict[args.tx_name],
+                                           ##sigVectors[key]))
+        ##avgDists[key] = avgDist_i
         
-    # 2) bootstrap that bitch and give me a stdErr!
-    medianEst,stdErrEst,lo95,hi95 = basic_bootstrap_est(avgDists.values())
+    ### 2) bootstrap that bitch and give me a stdErr!
+    ##medianEst,stdErrEst,lo95,hi95 = basic_bootstrap_est(avgDists.values())
     
-    # 3) recover keys that fall within +/- 1 SE
-    matchVectors = {}
-    for key in avgDists:
-        avgDist = avgDists[key]
-        if (avgDist >= -stdErrEst) and (avgDist <= stdErrEst):
-            matchVectors[key] = sigVectors[key]
+    ### 3) recover keys that fall within +/- 1 SE
+    ##matchVectors = {}
+    ##for key in avgDists:
+        ##avgDist = avgDists[key]
+        ##if (avgDist >= -stdErrEst) and (avgDist <= stdErrEst):
+            ##matchVectors[key] = sigVectors[key]
     
         
     
@@ -212,9 +213,18 @@ FASTA for use in motif discovery."""
     txList = sorted(matchVectors.keys(),key=lambda x: x[0], reverse=True)
     sortedTxListFile = NamedTemporaryFile(mode='w+t',prefix='txExpnVectFilteredBy_r.',suffix=".tsv",delete=False)
     for row in txList:
-        sortedTxListFile.write('%s\t%s\n' % ('\t'.join(map(str,row)),'\t'.join(matchVectors[row])))
+        if args.dump_stats:
+            sys.stdout.write('%s\t%s\n' % ('\t'.join(map(str,row)),'\t'.join(map(str,matchVectors[row]))))
+        else:
+            sortedTxListFile.write('%s\t%s\n' % ('\t'.join(map(str,row)),'\t'.join(map(str,matchVectors[row]))))
+    if args.dump_stats:
+        sortedTxListFile.close()
+        exit(0)
+        
     tmp_files['sortedTxListFile'] = sortedTxListFile
     sortedTxListFile.close()
+    
+
     
     g2gObj = gtf_to_genes.get_indexed_genes_matching_gtf_file_name(index_file_name=args.gtf_index, logger=logger, regex_str=args.gtf)[-1]
     txDict = filter_GTF_4_Tx(txList=[x[2] for x in txList],g2gObj=g2gObj)

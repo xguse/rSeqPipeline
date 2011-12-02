@@ -117,9 +117,13 @@ you list the same number of conditions for each expnfile and that the order refl
     
     for f in args.hfile:
         import_edges(graphObj=graph,edgeTablePath=f[0],startNodeHeader=f[1],endNodeHeader=f[2])
+    
         
     # remove the '' node caused by unpaired relationships
     graph.remove_node('')
+    
+    # for debugging
+    nx.write_gpickle(graph,"/tmp/ortho1.gpickle")    
         
     # Cut out a subgraph using provided targets
     subgraph = graph_connected_nodes(graphObj=graph,nodeList=args.targets)
@@ -149,7 +153,7 @@ you list the same number of conditions for each expnfile and that the order refl
     #h = nx.from_agraph(a)
     #pos = nx.graphviz_layout(h)
     #pos= nx.spring_layout(subgraph,iterations=100)
-    pos = nx.graphviz_layout(subgraph, args='-LC5')
+    pos = nx.graphviz_layout(subgraph, args='-LC1000000000')
     
     # set node colors
     nodelist = subgraph.nodes()
@@ -164,7 +168,7 @@ you list the same number of conditions for each expnfile and that the order refl
     for n in nodelist:
         # crazy list comprehension python-voodoo to create a list of colors in the same order as nodelist
         node_colors.extend([cDict[x] for x in prefixes if n.startswith(x)])
-    nx.draw_networkx_nodes(subgraph, pos,nodelist,node_color=node_colors,node_size=1000,node_shape='o')
+    nx.draw_networkx_nodes(subgraph, pos,nodelist,node_color=node_colors,node_size=1000,node_shape='o', aplha=.7)
     sigEdges = []
     nonSigEdges = []
     for e in subgraph.edges_iter():
@@ -216,14 +220,14 @@ you list the same number of conditions for each expnfile and that the order refl
                                style='solid', alpha=1)    
     nx.draw_networkx_edges(subgraph, pos, edgelist=badEdges, width=1.0,                         
                                edge_color='grey',
-                               style='solid', alpha=.7)    
+                               style='solid', alpha=.3)    
     
     # add color bar as key to heats
     plt.colorbar()
     
     #nx.draw_networkx_edge_labels(subgraph,pos,edge_labels=eLab)
     if not args.nonames:
-        nx.draw_networkx_labels(subgraph, pos, font_weight='bold', font_size=14)
+        nx.draw_networkx_labels(subgraph, pos, font_weight='bold', font_size=8)
     plt.axis('off')
     
     # write out the file(s)

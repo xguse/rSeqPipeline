@@ -105,7 +105,7 @@ def collectData(args):
     del(tmp)
     return data
         
-def plotScatter(pearsonStats,data,args):
+def plotScatter(pearsonStats,data,args,color='b'):
     """"""
     fig = pl.figure()
     ax  = fig.add_subplot(111)
@@ -114,7 +114,7 @@ def plotScatter(pearsonStats,data,args):
         ax.set_yscale('log')
     
     
-    ax.scatter(data[0],data[1], s=15, c='b', marker='o', alpha=1)
+    ax.scatter(data[0],data[1], s=15, c=color, marker='o', alpha=1)
     if not args.log:
         ax.set_autoscale_on(False)
     ax.set_xlabel(args.label1)
@@ -128,7 +128,7 @@ def plotScatter(pearsonStats,data,args):
     
     ax.plot([1,max(data[0])],bfYs,'r-')
     
-    pl.text(0.01,0.99,'Pearson: %.4f, %s\nBest Fit: y=%.3f*x+%.3f' % (pearsonStats[0],pearsonStats[1],m,b),
+    pl.text(0.02,0.95,'Pearson: %.4f, %s\nBest Fit: y=%.3f*x+%.3f' % (pearsonStats[0],pearsonStats[1],m,b),
             bbox=dict(facecolor='#87AACD', alpha=1),
             horizontalalignment='left',
             verticalalignment='top',
@@ -141,9 +141,9 @@ def plotScatter(pearsonStats,data,args):
         
     # construct outfile name
     if not args.log:
-        outName = '%s_%s_vs_%s.%s' % (args.out,args.label1,args.label2,pdf_or_png)
+        outName = '%s_%s_vs_%s.%s' % (args.out,args.label1.replace(' ','_'),args.label2.replace(' ','_'),pdf_or_png)
     else:
-        outName = '%s_%s_vs_%s.log.%s' % (args.out,args.label1,args.label2,pdf_or_png)
+        outName = '%s_%s_vs_%s.log.%s' % (args.out,args.label1.replace(' ','_'),args.label2.replace(' ','_'),pdf_or_png)
         
     pl.savefig(outName)
     
