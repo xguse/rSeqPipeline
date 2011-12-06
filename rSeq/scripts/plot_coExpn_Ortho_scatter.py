@@ -62,7 +62,7 @@ you list the same number of conditions for each expnfile and that the order refl
                         help="""Plot the image as a pdf: png otherwise. Png is preferable when data size is large. (Default: %(default)s)""")
     parser.add_argument('--out', type=str, default='',
                         help="""Base path for output. (Default: current working directory)""")
-    parser.add_argument('--pdf', type=str, default=False,
+    parser.add_argument('--load-pickle', type=str, default=False,
                         help="""Load graph from a gpickle. (Default: %(default)s)""")
     
     args = parser.parse_args()
