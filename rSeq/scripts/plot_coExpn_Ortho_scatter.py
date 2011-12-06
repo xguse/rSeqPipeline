@@ -108,8 +108,7 @@ you list the same number of conditions for each expnfile and that the order refl
         
     del(tmpDict)
     
-    load_pickle = True
-    if load_pickle:
+    if args.load_pickle:
         subgraphs = nx.read_gpickle('/tmp/ortho_weighted_subgraphs.gpickle')
     else:
         # lets get started: init the graph
