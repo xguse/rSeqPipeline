@@ -35,7 +35,7 @@ def cigarStr2AlignCoords(cigarString,minCoord,maxCoord,alignStrand,cigKind='ense
     (blkMinCoord_n,blkMaxCoord_n)
     ]
     
-    NOTE: Assumes 0-referenced "in-between" coordinate system as used in BED/exonserate."""
+    NOTE: Assumes 0-referenced "in-between" coordinate system as used in BED/exonerate."""
     
     cigInfo = parseCigarString(cigarString,kind=cigKind)
     
