@@ -155,3 +155,17 @@ def genephred2refflat(genePhredPath,refFlatPath):
         refFlat.write('%s\n' % (line))
     genePhred.close()
     refFlat.close()
+
+def vectorBaseExonerate_2_gff(resultTablePath,gffPath):
+    """
+    GIVEN:
+    1) resultTablePath: table resulting from mySQL query of EBI's "other features"
+       database schema with following query:
+       
+       SELECT * FROM seq_region JOIN dna_align_feature WHERE seq_region.seq_region_id < 8 AND dna_align_feature.analysis_id = 227 AND seq_region.seq_region_id = dna_align_feature.seq_region_id 
+    
+    DO:
+    1) 
+    
+    RETURN:
+    """
