@@ -116,18 +116,18 @@ def parseCigarString(cigarString,kind='ensembl'):
     
     Validates operation letters before returning."""
     
-    validKinds  = ['ensembl','exonerate']
+    validParserKinds  = {'ensembl':parseEnsemblCigar,
+                         'exonerate':parseExonerateCigar,
+                         'EBI':parseEBIcigar}
+    
     validCigOps = ['M','D','I']
-    if kind not in validKinds:
+    if kind not in validParserKinds.keys():
         raise InvalidOptionError('parseCigarString: valid kinds are: %s.  You gave: %s' % (validKinds,kind))
     if not type(cigarString) == type(''):
         raise InvalidOptionError('parseCigarString: type(cigarString) != type(""): %s' % (kind))
     
-    cigData = None
-    if kind == validKinds[0]:
-        cigData = parseEnsemblCigar(cigarString)
-    else:
-        cigData = parseExonerateCigar(cigarString)
+    cigData = validParserKinds[kind](cigarString)
+
     
     # Do some validation of cigar operation letters:
     cigOps = list(set([x[0] for x in cigData]))
@@ -150,6 +150,30 @@ def parseExonerateCigar(cigarString):
     while cigarList:
         cigar.append((cigarList.pop(0),int(cigarList.pop(0))))
     return cigar
+
+def parseEBIcigar(cigStr):
+    """
+    GIVEN:
+    1) cigStr: cigar string in form '524MI15MD51MD43MD14M'
+    
+    DO:
+    1) add a ' ' after every M,I,D and then split string.
+    2) break the number-letter into parts and add '1' to
+       solo letters.
+    
+    RETURN:
+    1) cigTup: a tuple of tuples representing the operation
+       letter followed by the number.
+    """
+    
+    cigList = cigStr.replace('D','D ').replace('M','M ').replace('I','I ').split()
+    
+    for i in range(len(cigList)):
+        if len(cigList[i]) == 1:
+            cigList[i] = (cigList[i],1)
+        else:
+            cigList[i] = (cigList[i][-1],int(cigList[i][:-1]))
+    return tuple(cigList)
 
 def parseEnsemblCigar(cigarString):
     """Given ensembl style cigar line, return list of lists representing

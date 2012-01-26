@@ -3,6 +3,8 @@ import sys, pdb
 import pysam
 
 from rSeq.utils.errors import *
+from rSeq.utils.files import tableFile2namedTuple
+from rSeq.utils.align import parseCigarString
 
 # import pp if avail
 try:
@@ -156,16 +158,28 @@ def genephred2refflat(genePhredPath,refFlatPath):
     genePhred.close()
     refFlat.close()
 
-def vectorBaseExonerate_2_gff(resultTablePath,gffPath):
+def vectorBaseESTs_2_gff3(resultTablePath,gff3Path):
     """
     GIVEN:
+    
     1) resultTablePath: table resulting from mySQL query of EBI's "other features"
        database schema with following query:
-       
-       SELECT * FROM seq_region JOIN dna_align_feature WHERE seq_region.seq_region_id < 8 AND dna_align_feature.analysis_id = 227 AND seq_region.seq_region_id = dna_align_feature.seq_region_id 
+           SELECT s.name AS "chr", d.* FROM dna_align_feature d
+           LEFT JOIN seq_region s ON (d.seq_region_id = s.seq_region_id)
+           WHERE s.seq_region_id < 8 AND d.analysis_id = 227 AND
+           s.seq_region_id = d.seq_region_id
+    
+    2) gffPath: path to new gff3 file
     
     DO:
-    1) 
+    
+    1) For each row, create multiline GFF3 entries using dna_align_feature_id
+       as 'ID' and hit_name as 'Alias', score as 'Score' column, etc. using the 
+       cigar_line to generate the feature coords.
+    2) Write data to gffPath.
     
     RETURN:
+    
+    1) Full path of gffPath.
     """
+    
