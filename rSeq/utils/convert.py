@@ -157,6 +157,35 @@ def genephred2refflat(genePhredPath,refFlatPath):
         refFlat.write('%s\n' % (line))
     genePhred.close()
     refFlat.close()
+    
+def MB_2_gff3(resultTablePath,gff3Path):
+    """
+    """
+    gff3_lines = []
+        
+    mb_table = tableFile2namedTuple(resultTablePath,sep='\t')
+    
+    for line in mb_table:
+        gff3_seqid = align_feat.chr
+        gff3_source = 'Cufflinks'
+        gff3_type = 'Assembled Tx boundries'
+        gff3_start = left
+        gff3_end = right
+        gff3_score = line.q_value
+        gff3_strand = strandConvertions[align_feat.seq_region_strand]
+        gff3_phase = '.'
+        gff3_attributes = 'ID=%s;Alias=%s' % (align_feat.dna_align_feature_id, align_feat.hit_name)
+        
+        gff3_lines.append([gff3_seqid,
+                           gff3_source,
+                           gff3_type,
+                           gff3_start,
+                           gff3_end,
+                           gff3_score,
+                           gff3_strand,
+                           gff3_phase,
+                           gff3_attributes])        
+    
 
 def vectorBaseESTs_2_gff3(resultTablePath,gff3Path):
     """
@@ -182,4 +211,95 @@ def vectorBaseESTs_2_gff3(resultTablePath,gff3Path):
     
     1) Full path of gffPath.
     """
+    # helper defs
+    def match(current_loc,value):
+        """
+        """      
+        left  = current_loc + 1
+        right = left + value - 1
+        
+        current_loc = right 
+        
+        return (current_loc,left,right)
+    
+    def insertion(current_loc,value):
+        """
+        """
+        left  = current_loc + 1
+        right = left + value - 1
+        current_loc = right 
+        
+        return (current_loc, None, None)
+        
+    def deletion(current_loc,value):
+        """
+        """
+        current_loc = current_loc
+        
+        return (current_loc, None, None)
+    
+    cigar_operations = {'I':insertion,
+                        'M':match,
+                        'D':deletion}
+    strandConvertions = {'1':'+',
+                         '-1':'-'}
+    
+    gff3_lines = []
+    
+    est_table = tableFile2namedTuple(resultTablePath,sep=',')
+    
+    for align_feat in est_table:
+        cig_tupl = parseCigarString(align_feat.cigar_line,kind='EBI')
+        #cig_tupl = parseCigarString("5M3D6M2I3M",kind='EBI')
+        align_feat_lines = []
+        
+        far_left  = int(align_feat.seq_region_start)
+        far_right = int(align_feat.seq_region_end)
+        #far_left  = 1
+        #far_right = 16        
+        
+        current_loc = far_left - 1 
+        
+        for op,value in cig_tupl:
+            current_loc, left, right = cigar_operations[op.upper()](current_loc,int(value))
+            if left != None:
+                #pass
+                # Construct the gff line for the match feature and append it to gff_lines
+                gff3_seqid = align_feat.chr
+                gff3_source = 'Exonerate'
+                gff3_type = 'EST_match'
+                gff3_start = left
+                gff3_end = right
+                gff3_score = align_feat.score
+                gff3_strand = strandConvertions[align_feat.seq_region_strand]
+                gff3_phase = '.'
+                gff3_attributes = 'ID=%s;Alias=%s' % (align_feat.dna_align_feature_id, align_feat.hit_name)
+                
+                align_feat_lines.append([gff3_seqid,
+                                         gff3_source,
+                                         gff3_type,
+                                         gff3_start,
+                                         gff3_end,
+                                         gff3_score,
+                                         gff3_strand,
+                                         gff3_phase,
+                                         gff3_attributes])
+            else:
+                pass
+            
+        # sanity check after each align_feat: does the final location == far_right?
+        if not current_loc == far_right:
+            raise SanityCheckError()
+        #else:
+            #raise Exception('YAY!')
+        gff3_lines.extend(align_feat_lines)
+        
+    # Add sort code here if needed
+    #  ---- sort code here ----
+    
+    gff3out = open(gff3Path,'w')
+    for line in gff3_lines:
+        gff3out.write('%s\n' % ('\t'.join([str(x) for x in line])))
+        
+    gff3out.close()
     
