@@ -294,6 +294,11 @@ def tableFile2namedTuple(tablePath,sep='\t',headers=None):
     if not headers:
         headers = reader.next()   
     Table   = collections.namedtuple('Table', headers)
+    # wrap Table.__getattribute__() for less typing
+    def get(self,colName):
+        return self.__getattribute__(colName)
+    Table.get = get
+    
     data    = [Table._make(x) for x in reader if x!=[]] # reader kept feeding an empty list at the end that botched everything!  wtf?!
     return data
 
