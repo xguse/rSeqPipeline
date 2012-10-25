@@ -271,8 +271,16 @@ class Motif(object,IUPAC,PWM):
         this motif.
         """
         # ++ initialize xms motif string ++
-        xMtf = '<motif>\n\t<name>%s_%.3f</name>\n\t\t<weightmatrix alphabet="DNA" columns="%s">\n' %\
-             (self.consensus,float(self.sigvalue),len(self.pwm['A']))
+        try:
+            xMtf = '<motif>\n\t<name>%s_%.3f</name>\n\t\t<weightmatrix alphabet="DNA" columns="%s">\n' %\
+                 (self.consensus,float(self.sigvalue),len(self.pwm['A']))
+        except AttributeError as err:
+            if 'sigvalue' in str(err.message):
+                self.sigvalue = 'nan'
+                xMtf = '<motif>\n\t<name>%s_%.3f</name>\n\t\t<weightmatrix alphabet="DNA" columns="%s">\n' %\
+                             (self.consensus,float(self.sigvalue),len(self.pwm['A']))
+            else:
+                raise err
 
         # ++ create and add each column's data ++                  
         for i in range(len(self.pwm['A'])):
@@ -290,8 +298,17 @@ class Motif(object,IUPAC,PWM):
              (self.sigvalue)
         xMtf += '\t\t<prop>\n\t\t\t<key>rank</key>\n\t\t\t<value>%s</value></prop>\n' % \
              (self.rank)
-        xMtf += '\t\t<prop>\n\t\t\t<key>algorithm</key>\n\t\t\t<value>%s</value></prop>\n' % \
-             (self.algorithm)
+        try:
+            xMtf += '\t\t<prop>\n\t\t\t<key>algorithm</key>\n\t\t\t<value>%s</value></prop>\n' % \
+                 (self.algorithm)
+        except AttributeError as err:
+            if 'algorithm' in str(err.message):
+                self.algorithm = 'nan'
+                xMtf += '\t\t<prop>\n\t\t\t<key>algorithm</key>\n\t\t\t<value>%s</value></prop>\n' % \
+                     (self.algorithm)
+            else:
+                raise err
+
         xMtf += '</motif>\n'
 
         return xMtf
