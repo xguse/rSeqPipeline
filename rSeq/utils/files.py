@@ -631,3 +631,36 @@ def renameChrom_in_SAM(path):
     except:
         raise
 
+
+def rename_fasta_headers(in_path,out_path,header_func):
+    """
+    GIVEN:
+        - in_path = path to original fasta file
+        - out_path = path to future altered fasta file
+        - header_func = function to take a header line and return an altered string version of it
+    DOES:
+        - Reads in in_path file one line at a time
+        - If the line is a fasta header (starts with '>')
+          uses header_func logic to rearrange the header and
+          writes out the changed line to out_path.
+        - If not a header, writes same line out to out_path.
+        - Closes both file objects.
+    RETURNS:
+        - None
+    """
+    
+    in_file = open(in_path,'rU')
+    out_file = open(out_path,'w')
+    
+    for line in in_file:
+        if line.startswith('>'):
+            line = header_func(line)
+            # Handle and ensure that each modified line has one and only one \n
+            line = line.rstrip('\n') + '\n' 
+        else:
+            pass
+        
+        out_file.write(line)
+    
+    in_file.close()
+    out_file.close()
