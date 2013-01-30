@@ -501,14 +501,17 @@ class ParseFastQ(object):
         # -- Make sure we got 4 full lines of data --
         assert trues == 4,\
                "** ERROR: It looks like I encountered a premature EOF or empty line.\n\
-               Please check FastQ file near line #%s (plus or minus ~4 lines) and try again**" % (self._currentLineNumber)
+               Please check FastQ file near line number %s (plus or minus ~4 lines) and try again**" % (self._currentLineNumber)
         # -- Make sure we are in the correct "register" --
         assert elemList[0].startswith(self._hdSyms[0]),\
                "** ERROR: The 1st line in fastq element does not start with '%s'.\n\
-               Please check FastQ file and try again **" % (self._hdSyms[0])
+               Please check FastQ file near line number %s (plus or minus ~4 lines) and try again**" % (self._hdSyms[0],self._currentLineNumber) 
         assert elemList[2].startswith(self._hdSyms[1]),\
                "** ERROR: The 3rd line in fastq element does not start with '%s'.\n\
-               Please check FastQ file and try again **" % (self._hdSyms[1])
+               Please check FastQ file near line number %s (plus or minus ~4 lines) and try again**" % (self._hdSyms[1],self._currentLineNumber) 
+        # -- Make sure the seq line and qual line have equal lengths --
+        assert len(elemList[1]) == len(elemList[3]), "** ERROR: The length of Sequence data and Quality data of the last record aren't equal.\n\
+               Please check FastQ file near line number %s (plus or minus ~4 lines) and try again**" % (self._currentLineNumber) 
         
         # ++++ Return fatsQ data as tuple ++++
         return tuple(elemList)
