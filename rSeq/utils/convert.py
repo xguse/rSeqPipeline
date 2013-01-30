@@ -164,17 +164,22 @@ def MB_2_gff3(resultTablePath,gff3Path):
     gff3_lines = []
         
     mb_table = tableFile2namedTuple(resultTablePath,sep='\t')
-    
+    skipped = 0
     for line in mb_table:
-        gff3_seqid = align_feat.chr
+        chrm,left,right = line.locus.replace('-',':').split(':')
+        if int(left) < 1:
+            skipped += 1
+            continue
+        gff3_seqid = chrm 
         gff3_source = 'Cufflinks'
         gff3_type = 'Assembled Tx boundries'
         gff3_start = left
         gff3_end = right
         gff3_score = line.q_value
-        gff3_strand = strandConvertions[align_feat.seq_region_strand]
+        gff3_strand = '?'
         gff3_phase = '.'
-        gff3_attributes = 'ID=%s;Alias=%s' % (align_feat.dna_align_feature_id, align_feat.hit_name)
+        gff3_attributes = 'ID=%s;Alias=%s;Note=%s' % \
+            (line.tracking_id, line.nearest_ref_id, line.class_code)
         
         gff3_lines.append([gff3_seqid,
                            gff3_source,
@@ -184,8 +189,14 @@ def MB_2_gff3(resultTablePath,gff3Path):
                            gff3_score,
                            gff3_strand,
                            gff3_phase,
-                           gff3_attributes])        
+                           gff3_attributes])
+        
+    gff3Out = open(gff3Path,'w')
+    for line in gff3_lines:
+        gff3Out.write('%s\n' % ('\t'.join(line)))
+    gff3Out.close()
     
+    return skipped
 
 def vectorBaseESTs_2_gff3(resultTablePath,gff3Path):
     """
