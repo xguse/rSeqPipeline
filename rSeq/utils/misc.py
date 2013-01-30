@@ -7,6 +7,18 @@ from email.MIMEText import MIMEText
 from optparse import IndentedHelpFormatter
 
 
+class breakTime(object):
+    """
+    """
+    def __init__(self, timeStr):
+        """
+        FOR NOW:
+        timeStr = seconds until break time
+        
+        TO DO:
+        timeStr = 00:00:00 hr:min:sec
+        """
+
 class RseqHelpFormatter(IndentedHelpFormatter):
     """Custom help formatter for optparse that allows
     me to break text into paragraphs!"""
