@@ -2,6 +2,7 @@ import sys
 import inspect
 import textwrap
 import smtplib
+import base64
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 from optparse import IndentedHelpFormatter
@@ -156,14 +157,14 @@ def email_notification(sender,to,subject,txt,pw):
         server.sendmail(sender,to,msg.as_string())
         server.close()
     except (smtplib.SMTPAuthenticationError,
-    smtplib.SMTPConnectError,
-    smtplib.SMTPDataError,
-    smtplib.SMTPException,
-    smtplib.SMTPHeloError,
-    smtplib.SMTPRecipientsRefused,
-    smtplib.SMTPResponseException,
-    smtplib.SMTPSenderRefused,
-    smtplib.SMTPServerDisconnected) as e:
+            smtplib.SMTPConnectError,
+            smtplib.SMTPDataError,
+            smtplib.SMTPException,
+            smtplib.SMTPHeloError,
+            smtplib.SMTPRecipientsRefused,
+            smtplib.SMTPResponseException,
+            smtplib.SMTPSenderRefused,
+            smtplib.SMTPServerDisconnected) as e:
         sys.stderr.write("Warning: %s was caught while trying to send your mail.\nContent:%s\n" % (e.__class__.__name__,e.message))
         
     
