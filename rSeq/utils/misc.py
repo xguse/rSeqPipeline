@@ -8,6 +8,24 @@ from email.MIMEText import MIMEText
 from optparse import IndentedHelpFormatter
 
 
+class Bunch(dict):
+    """
+    A dict like class to facilitate setting and access to tree-like data.
+    """
+    def __init__(self, *args, **kwds):
+        super(Bunch,self).__init__(*args,**kwds)
+        self.__dict__ = self
+
+def bunchify(dict_tree):
+    """
+    TODO: doc
+    """
+    for k,v in dict_tree.iteritems():
+        if type(v) == type({}):
+            dict_tree[k] = bunchify(dict_tree[k])
+    return Bunch(dict_tree)
+
+
 class breakTime(object):
     """
     """
