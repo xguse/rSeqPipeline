@@ -30,7 +30,7 @@ def runExternalApp(progName,argStr):
     
     # Ensure program is callable.
     if not whereis(progName):
-        raise ExternalError(None,'Could not find %s in your PATH.' % (progName))
+        raise SystemCallError(None,'"%s" command not found in your PATH environmental variable.' % (progName))
     
     # Construct shell command
     cmdStr = "%s %s" % (progName,argStr)
@@ -45,8 +45,7 @@ def runExternalApp(progName,argStr):
     
     # Check returncode for success/failure
     if process.returncode != 0:
-        raise ExternalError(process.returncode,result[1],progName)
+        raise SystemCallError(process.returncode,result[1],progName)
     
     # Return result
     return result
-    
